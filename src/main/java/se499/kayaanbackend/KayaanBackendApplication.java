@@ -22,21 +22,21 @@ public class KayaanBackendApplication implements CommandLineRunner {
     public void run(String... args) throws Exception {
 
         Employee employee1 = Employee.builder()
-                .firstName("Hola")
-                .lastName("Mola")
-                .email("holamola@gmail.com")
+                .firstName("John")
+                .lastName("Doe")
+                .email("john.doe@example.com")
                 .build();
 
         Employee employee2 = Employee.builder()
-                .firstName("Tony")
-                .lastName("Stark")
-                .email("Tony@gmail.com")
+                .firstName("Jane")
+                .lastName("Smith")
+                .email("jane.smith@example.com")
                 .build();
 
         Employee employee3 = Employee.builder()
-                .firstName("sushi")
-                .lastName("Ro")
-                .email("sushiRo@gmail.com")
+                .firstName("Alex")
+                .lastName("Johnson")
+                .email("alex.johnson@example.com")
                 .build();
 
         employeeRepository.save(employee1);
