@@ -1,4 +1,23 @@
-spring.application.name: Kayaan-Backend
+spring:
+  application:
+    name: Kayaan-Backend
+
+    profiles:
+      active:
+        - db
+  datasource:
+    url: jdbc:mysql://localhost:3306/selabdb?createDatabaseIfNotExist=true&autoReconnect=true&characterEncoding=UTC-8&allowMultiQueries=true&allowPublicKeyRetrieval=true&useSSL=false&useUnicode=ture
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: password
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: create
+
+
 
 application:
   security:
