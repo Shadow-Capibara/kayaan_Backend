@@ -31,7 +31,7 @@ public class SecurityConfiguration {
             .csrf((crsf) -> crsf.disable())
             .authorizeHttpRequests((authorize) -> {
 
-              authorize.requestMatchers("/api/v1/auth/**").permitAll().anyRequest().authenticated();
+              authorize.anyRequest().authenticated();
             })
 
             .sessionManagement((session) ->{
@@ -47,6 +47,11 @@ public class SecurityConfiguration {
               logout.logoutSuccessHandler((request, response, authentication) -> SecurityContextHolder.clearContext());
             })
     ;
+    http.csrf((csrf) -> csrf.disable())
+            .authorizeHttpRequests((authorize) -> {
+                authorize.requestMatchers("/api/v1/auth/**").permitAll()
+                        .anyRequest().authenticated();
+            });
 
     return http.build();
 
