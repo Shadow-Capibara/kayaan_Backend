@@ -11,6 +11,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
 import se499.kayaanbackend.security.config.JwtService;
 import se499.kayaanbackend.security.token.Token;
 import se499.kayaanbackend.security.token.TokenRepository;
