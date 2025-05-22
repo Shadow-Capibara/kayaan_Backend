@@ -34,11 +34,13 @@ public class AuthenticationService {
 
   public AuthenticationResponse register(RegisterRequest request) {
     User user = User.builder()
+            .username(request.getUsername())
             .firstname(request.getFirstname())
             .lastname(request.getLastname())
             .email(request.getEmail())
             .password(passwordEncoder.encode(request.getPassword()))
             .roles(List.of(Role.ROLE_USER))
+            .enabled(true)
             .build();
     var savedUser = repository.save(user);
     var jwtToken = jwtService.generateToken(user);
@@ -67,6 +69,7 @@ public class AuthenticationService {
     return AuthenticationResponse.builder()
             .accessToken(jwtToken)
             .refreshToken(refreshToken)
+            .message("login successful")
             .build();
   }
 
