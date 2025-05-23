@@ -5,7 +5,7 @@ spring:
   application:
     name: Kayaan-Backend
   datasource:
-    url: jdbc:mysql://localhost:3307/kayaan_db
+    url: jdbc:mysql://localhost:3307/kayaan_db?createDatabaseIfNotExist=true&autoReconnect=true&characterEncoding=UTF-8&allowMultiQueries=true&allowPublicKeyRetrieval=true&useSSL=false&useUnicode=true
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: password
