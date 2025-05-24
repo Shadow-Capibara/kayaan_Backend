@@ -39,14 +39,14 @@ public class ApplicationConfig {
   public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
     return config.getAuthenticationManager();
   }
-  @Bean
-  public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
-    return http.getSharedObject(AuthenticationManagerBuilder.class)
-            .userDetailsService(myUserDetailsService)
-            .passwordEncoder(passwordEncoder())
-            .and()
-            .build();
-  }
+//  @Bean
+//  public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
+//    return http.getSharedObject(AuthenticationManagerBuilder.class)
+//            .userDetailsService(myUserDetailsService)
+//            .passwordEncoder(passwordEncoder())
+//            .and()
+//            .build();
+//  }
 
   @Bean
   public PasswordEncoder passwordEncoder() {
