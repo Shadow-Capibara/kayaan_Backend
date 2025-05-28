@@ -7,11 +7,15 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import org.springframework.web.server.ResponseStatusException;
 import se499.kayaanbackend.security.config.JwtService;
 import se499.kayaanbackend.security.token.Token;
 import se499.kayaanbackend.security.token.TokenRepository;
@@ -53,13 +57,21 @@ public class AuthenticationService {
   }
 
   public AuthenticationResponse authenticate(AuthenticationRequest request) {
-    authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(
-                    request.getEmail(),
-                    request.getPassword()
-            )
-    );
-    User user = repository.findByUsername(request.getEmail())
+    try{
+      authenticationManager.authenticate(
+
+              new UsernamePasswordAuthenticationToken(
+                      request.getEmail(),
+                      request.getPassword()
+              )
+      );
+    }catch (DisabledException ex){
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is disabled");
+    }catch (BadCredentialsException ex){
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+    }//make the backend catch and throw error if they are forbidden or bad credential
+
+    User user = repository.findByEmail(request.getEmail())
             .orElseThrow();
 
     String jwtToken = jwtService.generateToken(user);

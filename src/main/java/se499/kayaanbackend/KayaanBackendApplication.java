@@ -1,14 +1,10 @@
 package se499.kayaanbackend;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import se499.kayaanbackend.entity.Employee;
-import se499.kayaanbackend.repository.EmployeeRepository;
 
 @SpringBootApplication
 public class KayaanBackendApplication{
