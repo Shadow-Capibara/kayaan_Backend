@@ -57,19 +57,12 @@ public class AuthenticationService {
   }
 
   public AuthenticationResponse authenticate(AuthenticationRequest request) {
-    try{
       authenticationManager.authenticate(
-
               new UsernamePasswordAuthenticationToken(
                       request.getEmail(),
                       request.getPassword()
               )
       );
-    }catch (DisabledException ex){
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is disabled");
-    }catch (BadCredentialsException ex){
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
-    }//make the backend catch and throw error if they are forbidden or bad credential
 
     User user = repository.findByEmail(request.getEmail())
             .orElseThrow();
