@@ -7,11 +7,15 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import org.springframework.web.server.ResponseStatusException;
 import se499.kayaanbackend.security.config.JwtService;
 import se499.kayaanbackend.security.token.Token;
 import se499.kayaanbackend.security.token.TokenRepository;
@@ -34,11 +38,13 @@ public class AuthenticationService {
 
   public AuthenticationResponse register(RegisterRequest request) {
     User user = User.builder()
-            .firstname(request.getFirstname())
-            .lastname(request.getLastname())
+            .username(request.getUsername())
+            .firstname(request.getFirstName())
+            .lastname(request.getLastName())
             .email(request.getEmail())
             .password(passwordEncoder.encode(request.getPassword()))
             .roles(List.of(Role.ROLE_USER))
+            .enabled(true)
             .build();
     var savedUser = repository.save(user);
     var jwtToken = jwtService.generateToken(user);
@@ -51,12 +57,13 @@ public class AuthenticationService {
   }
 
   public AuthenticationResponse authenticate(AuthenticationRequest request) {
-    authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(
-                    request.getUsername(),
-                    request.getPassword()
-            )
-    );
+      authenticationManager.authenticate(
+              new UsernamePasswordAuthenticationToken(
+                      request.getUsername(),
+                      request.getPassword()
+              )
+      );
+
     User user = repository.findByUsername(request.getUsername())
             .orElseThrow();
 
@@ -67,6 +74,7 @@ public class AuthenticationService {
     return AuthenticationResponse.builder()
             .accessToken(jwtToken)
             .refreshToken(refreshToken)
+            .message("login successful")
             .build();
   }
 
