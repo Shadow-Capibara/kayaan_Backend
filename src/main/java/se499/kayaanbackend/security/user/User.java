@@ -10,6 +10,7 @@ import org.hibernate.annotations.LazyCollectionOption;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import se499.kayaanbackend.entity.Theme;
 import se499.kayaanbackend.security.token.Token;
 
 import java.util.ArrayList;
@@ -36,6 +37,10 @@ public class User implements UserDetails {
   private String email;
   private String password;
   private Boolean enabled;
+  private String avatarUrl;
+
+  @ManyToOne
+  private Theme theme;
 
   @Enumerated(EnumType.STRING)
   @ElementCollection
