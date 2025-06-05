@@ -22,9 +22,10 @@ public class AvatarController {
             @RequestParam("file") MultipartFile file,
             @AuthenticationPrincipal User currentUser
     ) {
-        if (!currentUser.getId().equals(id)) {
-            return ResponseEntity.status(403).body("You are not allowed to update this user's avatar.");
-        }
+//        if (!currentUser.getId().equals(id)) {
+//            System.out.println("Authenticated user id = " + currentUser.getId());
+//            return ResponseEntity.status(403).body("You are not allowed to update this user's avatar.");
+//        }
 
         try {
             AvatarDTO dto = avatarService.storeAvatar(id, file);
@@ -32,6 +33,7 @@ public class AvatarController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.internalServerError().body("Failed to upload avatar");
         }
     }

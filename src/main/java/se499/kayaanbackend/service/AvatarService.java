@@ -22,8 +22,7 @@ public class AvatarService {
     private final UserDao userDao;
     private final AvatarMapper avatarMapper;
 
-    private final String uploadDir = "uploads/avatars";
-
+    private final String uploadDir = System.getProperty("user.dir") + "/uploads/avatars";
     @Transactional
     public AvatarDTO storeAvatar(Long userId, MultipartFile file) throws IOException {
         if (file.isEmpty()) {
