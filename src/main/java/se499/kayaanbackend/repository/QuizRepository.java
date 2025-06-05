@@ -5,7 +5,6 @@ import se499.kayaanbackend.entity.Quiz;
 
 import java.util.List;
 
-public class QuizRepository extends JpaRepository<Quiz, Integer> {
-    // Fetch all quizzes created by a particular user
+public interface QuizRepository extends JpaRepository<Quiz, Long> {
     List<Quiz> findByCreatedByUsername(String username);
 }

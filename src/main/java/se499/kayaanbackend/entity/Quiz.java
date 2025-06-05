@@ -3,7 +3,6 @@ package se499.kayaanbackend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.aspectj.weaver.patterns.TypePatternQuestions;
 
 import java.util.List;
 
@@ -26,5 +25,5 @@ public class Quiz {
     private String createdByUsername;
 
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<TypePatternQuestions.Question> questions;
+    private List<QuizQuestion> questions;
 }
