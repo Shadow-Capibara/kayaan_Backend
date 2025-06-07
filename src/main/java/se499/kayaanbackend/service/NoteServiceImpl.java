@@ -2,7 +2,7 @@ package se499.kayaanbackend.service;
 
 
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import se499.kayaanbackend.DTO.NoteRequestDTO;

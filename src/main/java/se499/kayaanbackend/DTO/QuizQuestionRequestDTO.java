@@ -13,7 +13,7 @@ import java.util.List;
 @Builder
 public class QuizQuestionRequestDTO {
 
-    @NotBlank
+
     private String questionText;
 
     @NotNull
