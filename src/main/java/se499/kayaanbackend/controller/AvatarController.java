@@ -15,26 +15,32 @@ import se499.kayaanbackend.service.AvatarService;
 public class AvatarController {
 
     private final AvatarService avatarService;
-
-    @PostMapping("/{id}/avatar")
+    @PostMapping("/{id}/avatar-upload")
     public ResponseEntity<?> uploadAvatar(
             @PathVariable Long id,
             @RequestParam("file") MultipartFile file,
+            @RequestParam("rotation") int rotation,
             @AuthenticationPrincipal User currentUser
     ) {
-//        if (!currentUser.getId().equals(id)) {
-//            System.out.println("Authenticated user id = " + currentUser.getId());
-//            return ResponseEntity.status(403).body("You are not allowed to update this user's avatar.");
-//        }
-
         try {
-            AvatarDTO dto = avatarService.storeAvatar(id, file);
+            AvatarDTO dto = avatarService.storeAvatar(id, file, rotation);
             return ResponseEntity.ok(dto);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().body("Failed to upload avatar");
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}/avatar-url")
+    public ResponseEntity<?> updateAvatarUrl(
+            @PathVariable Long id,
+            @RequestBody AvatarDTO avatarDTO,
+            @AuthenticationPrincipal User currentUser
+    ) {
+        try {
+            AvatarDTO dto = avatarService.savePresetAvatar(id, avatarDTO.getAvatarUrl(), avatarDTO.getRotation());
+            return ResponseEntity.ok(dto);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 }

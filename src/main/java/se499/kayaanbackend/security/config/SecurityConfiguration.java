@@ -15,6 +15,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import org.springframework.http.HttpMethod;
+
 import java.util.List;
 
 @Configuration
@@ -42,6 +44,10 @@ public class SecurityConfiguration {
               .csrf(csrf -> csrf.disable())
               .authorizeHttpRequests(auth -> auth
                       .requestMatchers("/api/v1/auth/**").permitAll()
+                      .requestMatchers(HttpMethod.POST,
+                              "/api/users/*/avatar-upload").hasRole("USER")
+                      .requestMatchers(HttpMethod.PUT ,
+                              "/api/users/*/avatar-url").hasRole("USER")
                       .anyRequest().authenticated()
               )
               .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

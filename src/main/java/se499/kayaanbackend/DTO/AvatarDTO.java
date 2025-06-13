@@ -7,6 +7,9 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Data
 public class AvatarDTO {
+    private Integer userId;
     private String avatarUrl;
+    private Integer rotation;
 }
