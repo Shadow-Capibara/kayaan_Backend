@@ -24,3 +24,5 @@ application:
       expiration: 86400000
       refresh-token:
         expiration: 604800000
+avatar:
+  upload-dir: ${user.dir}/uploads/avatars
