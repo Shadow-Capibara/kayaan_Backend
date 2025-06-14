@@ -42,12 +42,21 @@ public class SecurityConfiguration {
                   return config;
               }))
               .csrf(csrf -> csrf.disable())
+//              .authorizeHttpRequests(auth -> auth
+//                      .requestMatchers("/api/v1/auth/**").permitAll()
+//                      .requestMatchers(HttpMethod.POST,
+//                              "/api/users/*/avatar-upload").hasRole("USER")
+//                      .requestMatchers(HttpMethod.PUT ,
+//                              "/api/users/*/avatar-url").hasRole("USER")
+//                      .anyRequest().authenticated()
+//              )
               .authorizeHttpRequests(auth -> auth
                       .requestMatchers("/api/v1/auth/**").permitAll()
-                      .requestMatchers(HttpMethod.POST,
-                              "/api/users/*/avatar-upload").hasRole("USER")
-                      .requestMatchers(HttpMethod.PUT ,
-                              "/api/users/*/avatar-url").hasRole("USER")
+                      .requestMatchers(HttpMethod.GET, "/api/themes").permitAll()
+                      .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
+                      .requestMatchers(HttpMethod.POST, "/api/users/{id}/avatar-upload").authenticated()
+                      .requestMatchers(HttpMethod.PUT, "/api/users/{id}/avatar-url").authenticated()
+                      .requestMatchers("/api/users/{id}/**").authenticated()
                       .anyRequest().authenticated()
               )
               .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
