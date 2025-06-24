@@ -8,10 +8,14 @@ import org.springframework.stereotype.Service;
 import se499.kayaanbackend.DTO.QuizQuestionRequestDTO;
 import se499.kayaanbackend.DTO.QuizRequestDTO;
 import se499.kayaanbackend.DTO.QuizResponseDTO;
+import se499.kayaanbackend.entity.ContentInformation;
 import se499.kayaanbackend.entity.Quiz;
 import se499.kayaanbackend.entity.QuizQuestion;
+import se499.kayaanbackend.repository.ContentInformationRepository;
+import se499.kayaanbackend.repository.QuizQuestionChoiceRepository;
 import se499.kayaanbackend.repository.QuizQuestionRepository;
 import se499.kayaanbackend.repository.QuizRepository;
+import se499.kayaanbackend.security.user.UserService;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,42 +26,72 @@ import java.util.stream.Collectors;
 public class QuizServiceImpl implements QuizService {
     private final QuizRepository quizRepository;
     private final QuizQuestionRepository questionRepository;
+    private final QuizQuestionChoiceRepository choiceRepository;
+    private final ContentInformationRepository contentInformationRepository;
+    private final UserService userService;
 
     @Override
     public QuizResponseDTO createQuiz(QuizRequestDTO requestDto, String createdByUsername) {
-        // 1. Build Quiz entity (without questions yet)
-        Quiz quiz = Quiz.builder()
-                .title(requestDto.getTitle())
-                .createdByUsername(createdByUsername)
+        var user = userService.findByUsername(createdByUsername);
+
+        String subject = requestDto.getQuestions().isEmpty() ? null : requestDto.getQuestions().get(0).getSubject();
+        String difficulty = requestDto.getQuestions().isEmpty() ? "MEDIUM" : requestDto.getQuestions().get(0).getDifficulty();
+        String tag = requestDto.getQuestions().isEmpty() ? null : (requestDto.getQuestions().get(0).getTags() != null && !requestDto.getQuestions().get(0).getTags().isEmpty() ? requestDto.getQuestions().get(0).getTags().get(0) : null);
+
+        ContentInformation content = ContentInformation.builder()
+                .contentType(ContentInformation.ContentType.QUIZ)
+                .contentSubject(subject)
+                .contentTitle(requestDto.getTitle())
+                .tag(tag)
+                .difficulty(ContentInformation.Difficulty.valueOf(difficulty.toUpperCase()))
+                .user(user)
+                .createdAt(java.time.LocalDateTime.now())
+                .updatedAt(java.time.LocalDateTime.now())
                 .build();
 
-        // 2. Convert each QuestionRequestDto → Question entity
+        content = contentInformationRepository.save(content);
+
+        Quiz quiz = Quiz.builder()
+                .contentInformation(content)
+                .quizType(Quiz.QuizType.MULTIPLE_CHOICE)
+                .quizDetail(requestDto.getTitle())
+                .createdAt(java.time.LocalDateTime.now())
+                .updatedAt(java.time.LocalDateTime.now())
+                .build();
+
         List<QuizQuestion> questionEntities = requestDto.getQuestions().stream().map(qDTO -> {
             QuizQuestion question = QuizQuestion.builder()
                     .quiz(quiz)
                     .questionText(qDTO.getQuestionText())
                     .type(mapDtoTypeToEntityType(qDTO.getType()))
-                    .choices(qDTO.getChoices())
                     .correctAnswer(qDTO.getCorrectAnswer())
-                    .subject(qDTO.getSubject())
-                    .difficulty(qDTO.getDifficulty())
-                    .tags(qDTO.getTags())
+                    .createdAt(java.time.LocalDateTime.now())
+                    .updatedAt(java.time.LocalDateTime.now())
                     .build();
+            if (qDTO.getChoices() != null) {
+                List<se499.kayaanbackend.entity.QuizQuestionChoice> choices = qDTO.getChoices().stream()
+                        .map(choiceStr -> se499.kayaanbackend.entity.QuizQuestionChoice.builder()
+                                .question(question)
+                                .choiceDetail(choiceStr)
+                                .createdAt(java.time.LocalDateTime.now())
+                                .updatedAt(java.time.LocalDateTime.now())
+                                .build())
+                        .collect(Collectors.toList());
+                question.setChoices(choices);
+            }
             return question;
         }).collect(Collectors.toList());
 
-        // 3. Set questions on Quiz and save
         quiz.setQuestions(questionEntities);
         Quiz savedQuiz = quizRepository.save(quiz);
 
-        // 4. Convert savedQuiz → QuizResponseDto
         return mapToResponseDTO(savedQuiz);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<QuizResponseDTO> getAllQuizzesForUser(String username) {
-        List<Quiz> quizzes = quizRepository.findByCreatedByUsername(username);
+        List<Quiz> quizzes = quizRepository.findByContentInformation_User_Username(username);
         return quizzes.stream()
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
@@ -69,7 +103,7 @@ public class QuizServiceImpl implements QuizService {
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new EntityNotFoundException("Quiz not found: " + quizId));
 
-        if (!quiz.getCreatedByUsername().equals(username)) {
+        if (!quiz.getContentInformation().getUser().getUsername().equals(username)) {
             throw new SecurityException("You do not have access to this quiz.");
         }
         return mapToResponseDTO(quiz);
@@ -80,7 +114,7 @@ public class QuizServiceImpl implements QuizService {
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new EntityNotFoundException("Quiz not found: " + quizId));
 
-        if (!quiz.getCreatedByUsername().equals(username)) {
+        if (!quiz.getContentInformation().getUser().getUsername().equals(username)) {
             throw new SecurityException("You do not have permission to delete this quiz.");
         }
         quizRepository.delete(quiz);
@@ -109,18 +143,15 @@ public class QuizServiceImpl implements QuizService {
                         .id(q.getId())
                         .questionText(q.getQuestionText())
                         .type(QuizQuestionRequestDTO.QuestionType.valueOf(q.getType().name()))
-                        .choices(q.getChoices())
+                        .choices(q.getChoices() == null ? null : q.getChoices().stream().map(se499.kayaanbackend.entity.QuizQuestionChoice::getChoiceDetail).collect(Collectors.toList()))
                         .correctAnswer(q.getCorrectAnswer())
-                        .subject(q.getSubject())
-                        .difficulty(q.getDifficulty())
-                        .tags(q.getTags())
                         .build()
         ).collect(Collectors.toList());
 
         return QuizResponseDTO.builder()
                 .id(quiz.getId())
-                .title(quiz.getTitle())
-                .createdByUsername(quiz.getCreatedByUsername())
+                .title(quiz.getContentInformation().getContentTitle())
+                .createdByUsername(quiz.getContentInformation().getUser().getUsername())
                 .questions(questionResponses)
                 .build();
     }

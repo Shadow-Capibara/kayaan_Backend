@@ -1,0 +1,7 @@
+package se499.kayaanbackend.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import se499.kayaanbackend.entity.ContentInformation;
+
+public interface ContentInformationRepository extends JpaRepository<ContentInformation, Long> {
+}

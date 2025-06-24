@@ -2,11 +2,12 @@ package se499.kayaanbackend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.util.List;
 
+import se499.kayaanbackend.entity.NoteImage;
+
 @Entity
-@Table(name = "notes")
+@Table(name = "note_information")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -15,25 +16,25 @@ import java.util.List;
 public class Note {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "noteID")
     private Long id;
 
-    @Column(nullable = false)
-    private String createdByUsername;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "contentInfoID", nullable = false)
+    private ContentInformation contentInformation;
 
-    @Column(nullable = false)
-    private String title;
-
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(name = "note_text", columnDefinition = "LONGTEXT")
     private String content;
 
-    @Column(nullable = true)
-    private String subject;
+    @OneToMany(mappedBy = "note", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<NoteImage> images;
 
-    @Column(nullable = true)
-    private String difficulty;
+    @Column(name = "created_at")
+    private java.time.LocalDateTime createdAt;
 
-    @ElementCollection
-    @CollectionTable(name = "note_tags", joinColumns = @JoinColumn(name = "note_id"))
-    @Column(name = "tag")
-    private List<String> tags;
+    @Column(name = "updated_at")
+    private java.time.LocalDateTime updatedAt;
+
+    @Column(name = "deleted_at")
+    private java.time.LocalDateTime deletedAt;
 }

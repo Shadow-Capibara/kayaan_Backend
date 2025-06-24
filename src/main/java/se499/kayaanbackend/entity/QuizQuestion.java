@@ -7,7 +7,7 @@ import lombok.*;
 import java.util.List;
 
 @Entity
-@Table(name = "questions")
+@Table(name = "quiz_question_information")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -23,42 +23,38 @@ public class QuizQuestion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "questionID")
     private Long id;
 
     // Link back to parent quiz
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "quiz_id", nullable = false)
+    @JoinColumn(name = "quizInfoID", nullable = false)
     private Quiz quiz;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(name = "question_text", nullable = false, columnDefinition = "TEXT")
     private String questionText;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "questionType", nullable = false)
     private QuestionType type;
 
     // For MCQ only: store the choices as a list of strings
     // For True/False or Open-Ended, you can leave this empty
-    @ElementCollection
-    @CollectionTable(name = "question_choices", joinColumns = @JoinColumn(name = "question_id"))
-    @Column(name = "choice")
-    private List<String> choices;
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<QuizQuestionChoice> choices;
 
     // For MCQ/TrueFalse: the correct answer (e.g. "A" or "true")
     // For Open-Ended: you could store sample answers or leave blank (depending on your design)
-    @Column(nullable = true, columnDefinition = "TEXT")
+    @Column(name = "correct_answer", columnDefinition = "TEXT")
     private String correctAnswer;
 
     // Optional metadata: subject, difficulty (you can expand these into enums if you want)
-    @Column(nullable = true)
-    private String subject;
+    @Column(name = "created_at")
+    private java.time.LocalDateTime createdAt;
 
-    @Column(nullable = true)
-    private String difficulty;
+    @Column(name = "updated_at")
+    private java.time.LocalDateTime updatedAt;
 
-    // Tags as a simple list of strings (e.g. ["algebra","easy"])
-    @ElementCollection
-    @CollectionTable(name = "question_tags", joinColumns = @JoinColumn(name = "question_id"))
-    @Column(name = "tag")
-    private List<String> tags;
+    @Column(name = "deleted_at")
+    private java.time.LocalDateTime deletedAt;
 }

@@ -6,5 +6,5 @@ import se499.kayaanbackend.entity.Quiz;
 import java.util.List;
 
 public interface QuizRepository extends JpaRepository<Quiz, Long> {
-    List<Quiz> findByCreatedByUsername(String username);
+    List<Quiz> findByContentInformation_User_Username(String username);
 }

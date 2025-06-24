@@ -2,9 +2,12 @@ package se499.kayaanbackend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.util.List;
+
+import se499.kayaanbackend.entity.FlashcardImage;
 
 @Entity
-@Table(name = "flashcards")
+@Table(name = "flashcard_info")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -13,22 +16,28 @@ import lombok.*;
 public class Flashcard {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "flashcardID")
     private Long id;
 
-    @Column(nullable = false)
-    private String createdByUsername;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "contentInfoID", nullable = false)
+    private ContentInformation contentInformation;
 
-    @Column(nullable = false)
-    private String frontText;   // e.g. “Define polymorphism”
+    @Column(name = "flashcardDetail", nullable = false, columnDefinition = "TEXT")
+    private String frontText;
 
-    @Column(nullable = false)
-    private String backText;    // e.g. “Polymorphism is ...”
+    @Column(name = "flashcardAnswer", nullable = false, columnDefinition = "TEXT")
+    private String backText;
 
-    private String subject;
-    private String difficulty;
+    @OneToMany(mappedBy = "flashcard", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FlashcardImage> images;
 
-    @ElementCollection
-    @CollectionTable(name = "flashcard_tags", joinColumns = @JoinColumn(name = "flashcard_id"))
-    @Column(name = "tag")
-    private java.util.List<String> tags;
+    @Column(name = "created_at")
+    private java.time.LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private java.time.LocalDateTime updatedAt;
+
+    @Column(name = "deleted_at")
+    private java.time.LocalDateTime deletedAt;
 }
