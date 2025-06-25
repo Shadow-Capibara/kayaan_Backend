@@ -42,6 +42,20 @@ public class QuizController {
         return ResponseEntity.ok(quizzes);
     }
 
+    @GetMapping("/filter")
+    public ResponseEntity<List<QuizResponseDTO>> filterQuizzes(@RequestParam(required = false) String category,
+                                                               @RequestParam(required = false) String subject) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+        if (category != null) {
+            return ResponseEntity.ok(quizService.getQuizzesByCategory(username, category));
+        }
+        if (subject != null) {
+            return ResponseEntity.ok(quizService.getQuizzesBySubject(username, subject));
+        }
+        return ResponseEntity.ok(quizService.getAllQuizzesForUser(username));
+    }
+
     // 3. Get a single quiz by ID (only if owned by user)
     @GetMapping("/{quizId}")
     public ResponseEntity<QuizResponseDTO> getQuizById(
@@ -66,6 +80,12 @@ public class QuizController {
         return ResponseEntity.noContent().build();
     }
 
-    // (Optional) You can add an update endpoint if you want to allow editing an existing quiz
-    // @PutMapping("/{quizId}") ...
+    @PutMapping("/{quizId}")
+    public ResponseEntity<QuizResponseDTO> updateQuiz(@PathVariable Long quizId,
+                                                      @RequestBody QuizRequestDTO dto) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+        QuizResponseDTO updated = quizService.updateQuiz(quizId, dto, username);
+        return ResponseEntity.ok(updated);
+    }
 }

@@ -32,6 +32,21 @@ public class FlashcardController {
         return ResponseEntity.ok(flashcardService.getAllFlashcardsForUser(username));
     }
 
+    @GetMapping("/filter")
+    public ResponseEntity<List<FlashcardResponseDTO>> filterFlashcards(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String subject
+    ) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (category != null) {
+            return ResponseEntity.ok(flashcardService.getFlashcardsByCategory(username, category));
+        }
+        if (subject != null) {
+            return ResponseEntity.ok(flashcardService.getFlashcardsBySubject(username, subject));
+        }
+        return ResponseEntity.ok(flashcardService.getAllFlashcardsForUser(username));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<FlashcardResponseDTO> getFlashcardById(@PathVariable Long id) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -44,6 +59,14 @@ public class FlashcardController {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         flashcardService.deleteFlashcard(id, username);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<FlashcardResponseDTO> updateFlashcard(@PathVariable Long id,
+                                                                @RequestBody FlashcardRequestDTO dto) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        FlashcardResponseDTO updated = flashcardService.updateFlashcard(id, dto, username);
+        return ResponseEntity.ok(updated);
     }
 
 }

@@ -33,6 +33,21 @@ public class NoteController {
         return ResponseEntity.ok(noteService.getAllNotesForUser(username));
     }
 
+    @GetMapping("/filter")
+    public ResponseEntity<List<NoteResponseDTO>> filterNotes(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String subject
+    ) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (category != null) {
+            return ResponseEntity.ok(noteService.getNotesByCategory(username, category));
+        }
+        if (subject != null) {
+            return ResponseEntity.ok(noteService.getNotesBySubject(username, subject));
+        }
+        return ResponseEntity.ok(noteService.getAllNotesForUser(username));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<NoteResponseDTO> getNoteById(@PathVariable Long id) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -45,5 +60,13 @@ public class NoteController {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         noteService.deleteNote(id, username);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<NoteResponseDTO> updateNote(@PathVariable Long id,
+                                                      @RequestBody NoteRequestDTO dto) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        NoteResponseDTO updated = noteService.updateNote(id, dto, username);
+        return ResponseEntity.ok(updated);
     }
 }

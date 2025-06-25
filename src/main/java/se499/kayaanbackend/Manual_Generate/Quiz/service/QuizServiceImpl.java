@@ -12,6 +12,8 @@ import se499.kayaanbackend.Manual_Generate.Quiz.entity.Quiz;
 import se499.kayaanbackend.Manual_Generate.Quiz.entity.QuizQuestion;
 import se499.kayaanbackend.Manual_Generate.Quiz.repository.QuizQuestionRepository;
 import se499.kayaanbackend.Manual_Generate.Quiz.repository.QuizRepository;
+import se499.kayaanbackend.Manual_Generate.Group.entity.Group;
+import se499.kayaanbackend.Manual_Generate.Group.repository.GroupRepository;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,13 +24,19 @@ import java.util.stream.Collectors;
 public class QuizServiceImpl implements QuizService {
     private final QuizRepository quizRepository;
     private final QuizQuestionRepository questionRepository;
+    private final GroupRepository groupRepository;
 
     @Override
     public QuizResponseDTO createQuiz(QuizRequestDTO requestDto, String createdByUsername) {
         // 1. Build Quiz entity (without questions yet)
+        List<Group> groups = requestDto.getGroupIds() == null ? java.util.Collections.emptyList() :
+                groupRepository.findAllById(requestDto.getGroupIds());
+
         Quiz quiz = Quiz.builder()
                 .title(requestDto.getTitle())
+                .category(requestDto.getCategory())
                 .createdByUsername(createdByUsername)
+                .sharedGroups(groups)
                 .build();
 
         // 2. Convert each QuestionRequestDto → Question entity
@@ -65,6 +73,20 @@ public class QuizServiceImpl implements QuizService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<QuizResponseDTO> getQuizzesByCategory(String username, String category) {
+        List<Quiz> quizzes = quizRepository.findByCreatedByUsernameAndCategory(username, category);
+        return quizzes.stream().map(this::mapToResponseDTO).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<QuizResponseDTO> getQuizzesBySubject(String username, String subject) {
+        List<Quiz> quizzes = quizRepository.findByCreatedByUsernameAndQuestions_Subject(username, subject);
+        return quizzes.stream().map(this::mapToResponseDTO).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public QuizResponseDTO getQuizById(Long quizId, String username) {
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new EntityNotFoundException("Quiz not found: " + quizId));
@@ -73,6 +95,34 @@ public class QuizServiceImpl implements QuizService {
             throw new SecurityException("You do not have access to this quiz.");
         }
         return mapToResponseDTO(quiz);
+    }
+
+    @Override
+    public QuizResponseDTO updateQuiz(Long quizId, QuizRequestDTO requestDto, String username) {
+        Quiz quiz = quizRepository.findById(quizId)
+                .orElseThrow(() -> new EntityNotFoundException("Quiz not found: " + quizId));
+        if (!quiz.getCreatedByUsername().equals(username)) {
+            throw new SecurityException("You do not have permission to edit this quiz.");
+        }
+        quiz.setTitle(requestDto.getTitle());
+        quiz.setCategory(requestDto.getCategory());
+        List<Group> groups = requestDto.getGroupIds() == null ? java.util.Collections.emptyList() :
+                groupRepository.findAllById(requestDto.getGroupIds());
+        quiz.setSharedGroups(groups);
+        quiz.getQuestions().clear();
+        List<QuizQuestion> questionEntities = requestDto.getQuestions().stream().map(qDTO -> QuizQuestion.builder()
+                .quiz(quiz)
+                .questionText(qDTO.getQuestionText())
+                .type(mapDtoTypeToEntityType(qDTO.getType()))
+                .choices(qDTO.getChoices())
+                .correctAnswer(qDTO.getCorrectAnswer())
+                .subject(qDTO.getSubject())
+                .difficulty(qDTO.getDifficulty())
+                .tags(qDTO.getTags())
+                .build()).collect(Collectors.toList());
+        quiz.getQuestions().addAll(questionEntities);
+        Quiz saved = quizRepository.save(quiz);
+        return mapToResponseDTO(saved);
     }
 
     @Override
@@ -121,6 +171,8 @@ public class QuizServiceImpl implements QuizService {
                 .id(quiz.getId())
                 .title(quiz.getTitle())
                 .createdByUsername(quiz.getCreatedByUsername())
+                .category(quiz.getCategory())
+                .groupIds(quiz.getSharedGroups().stream().map(Group::getId).collect(Collectors.toList()))
                 .questions(questionResponses)
                 .build();
     }

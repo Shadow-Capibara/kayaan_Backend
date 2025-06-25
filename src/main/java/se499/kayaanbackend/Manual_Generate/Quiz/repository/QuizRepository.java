@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface QuizRepository extends JpaRepository<Quiz, Long> {
     List<Quiz> findByCreatedByUsername(String username);
+    List<Quiz> findByCreatedByUsernameAndCategory(String username, String category);
+    List<Quiz> findByCreatedByUsernameAndQuestions_Subject(String username, String subject);
 }

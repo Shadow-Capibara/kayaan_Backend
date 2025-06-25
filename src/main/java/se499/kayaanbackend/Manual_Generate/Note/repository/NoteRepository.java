@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface NoteRepository extends JpaRepository<Note, Long> {
     List<Note> findByCreatedByUsername(String username);
+    List<Note> findByCreatedByUsernameAndCategory(String username, String category);
+    List<Note> findByCreatedByUsernameAndSubject(String username, String subject);
 }
