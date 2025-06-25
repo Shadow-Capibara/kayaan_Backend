@@ -14,6 +14,8 @@ public class QuizResponseDTO {
     private Long id;
     private String title;
     private String createdByUsername;
+    private String category;
+    private List<Long> groupIds;
 
     // Return the questions back as a list of QuestionResponse (or reuse QuestionRequestDto here)
     private List<QuestionResponse> questions;

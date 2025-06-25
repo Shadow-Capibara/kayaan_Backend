@@ -15,5 +15,9 @@ public class FlashcardRequestDTO {
     private String backText;
     private String subject;
     private String difficulty;
+    private String category;
+    private String frontImageUrl;
+    private String backImageUrl;
     private List<String> tags;
+    private List<Long> groupIds;
 }

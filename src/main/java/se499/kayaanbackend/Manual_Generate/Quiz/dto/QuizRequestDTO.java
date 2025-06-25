@@ -14,5 +14,8 @@ public class QuizRequestDTO {
 
     private String title;
 
+    private String category;
+    private List<Long> groupIds;
+
     private List<QuizQuestionRequestDTO> questions;
 }

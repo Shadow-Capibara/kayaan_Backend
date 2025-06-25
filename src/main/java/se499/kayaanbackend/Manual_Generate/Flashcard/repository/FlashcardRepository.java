@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface FlashcardRepository extends JpaRepository<Flashcard, Long> {
     List<Flashcard> findByCreatedByUsername(String username);
+    List<Flashcard> findByCreatedByUsernameAndCategory(String username, String category);
+    List<Flashcard> findByCreatedByUsernameAndSubject(String username, String subject);
 }
