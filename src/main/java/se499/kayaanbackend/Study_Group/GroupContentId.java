@@ -1,4 +1,4 @@
-package se499.kayaanbackend.redesign.entity;
+package se499.kayaanbackend.Study_Group;
 
 import lombok.Data;
 

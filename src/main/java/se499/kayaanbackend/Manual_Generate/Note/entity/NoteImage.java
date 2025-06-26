@@ -1,4 +1,4 @@
-package se499.kayaanbackend.redesign.entity;
+package se499.kayaanbackend.Manual_Generate.Note.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -6,23 +6,23 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "study_group")
+@Table(name = "note_image")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class StudyGroup {
+public class NoteImage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer groupID;
+    private Integer imageID;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ownerUserID", nullable = false)
-    private UserNew owner;
+    @JoinColumn(name = "noteID", nullable = false)
+    private NoteInformation noteInformation;
 
     @Column(nullable = false)
-    private String name;
+    private String imageURL;
 
     private LocalDateTime created_at;
     private LocalDateTime updated_at;

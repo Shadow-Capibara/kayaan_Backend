@@ -1,4 +1,4 @@
-package se499.kayaanbackend.redesign.entity;
+package se499.kayaanbackend.Manual_Generate.Quiz.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

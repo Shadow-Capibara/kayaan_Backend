@@ -1,28 +1,29 @@
-package se499.kayaanbackend.redesign.entity;
+package se499.kayaanbackend.Study_Group;
 
 import jakarta.persistence.*;
 import lombok.*;
+import se499.kayaanbackend.redesign.entity.UserNew;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "flashcard_image")
+@Table(name = "study_group")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class FlashcardImage {
+public class StudyGroup {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer imageID;
+    private Integer groupID;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "flashcardID", nullable = false)
-    private FlashcardInfo flashcardInfo;
+    @JoinColumn(name = "ownerUserID", nullable = false)
+    private UserNew owner;
 
     @Column(nullable = false)
-    private String imageURL;
+    private String name;
 
     private LocalDateTime created_at;
     private LocalDateTime updated_at;

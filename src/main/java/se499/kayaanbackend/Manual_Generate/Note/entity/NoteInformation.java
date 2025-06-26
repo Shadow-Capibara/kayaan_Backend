@@ -1,36 +1,31 @@
-package se499.kayaanbackend.redesign.entity;
+package se499.kayaanbackend.Manual_Generate.Note.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import se499.kayaanbackend.Manual_Generate.contentInfo.entity.ContentInformation;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "quiz_information")
+@Table(name = "note_information")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class QuizInformation {
+public class NoteInformation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer quizInfoID;
+    private Integer noteID;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "contentInfoID", nullable = false)
     private ContentInformation contentInformation;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private QuizType quizType;
-
-    @Column(name = "quiz_detail", columnDefinition = "TEXT", nullable = false)
-    private String quizDetail;
+    @Column(name = "note_text", columnDefinition = "LONGTEXT")
+    private String noteText;
 
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
     private LocalDateTime deleted_at;
-
-    public enum QuizType { MultipleChoice, TrueFalse, OpenEnded }
 }

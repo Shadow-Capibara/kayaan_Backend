@@ -1,7 +1,8 @@
-package se499.kayaanbackend.redesign.entity;
+package se499.kayaanbackend.Manual_Generate.contentInfo.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import se499.kayaanbackend.redesign.entity.UserNew;
 
 import java.time.LocalDateTime;
 

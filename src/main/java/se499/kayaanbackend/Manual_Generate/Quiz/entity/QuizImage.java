@@ -1,4 +1,4 @@
-package se499.kayaanbackend.redesign.entity;
+package se499.kayaanbackend.Manual_Generate.Quiz.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -6,23 +6,23 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "quiz_question_choice")
+@Table(name = "quiz_image")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class QuizQuestionChoice {
+public class QuizImage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer choiceID;
+    private Integer imageID;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "questionID", nullable = false)
-    private QuizQuestionInformation question;
+    @JoinColumn(name = "quizInfoID", nullable = false)
+    private QuizInformation quizInformation;
 
-    @Column(name = "choiceDetail", columnDefinition = "TEXT", nullable = false)
-    private String choiceDetail;
+    @Column(nullable = false)
+    private String imageURL;
 
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
