@@ -2,7 +2,7 @@ package se499.kayaanbackend.Manual_Generate.Flashcard.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import se499.kayaanbackend.Manual_Generate.contentInfo.entity.ContentInformation;
+import se499.kayaanbackend.Manual_Generate.contentInfo.entity.ContentInfo;
 
 import java.time.LocalDateTime;
 
@@ -20,7 +20,7 @@ public class FlashcardInfo {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "contentInfoID", nullable = false)
-    private ContentInformation contentInformation;
+    private ContentInfo contentInformation;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String flashcardDetail;

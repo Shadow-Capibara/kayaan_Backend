@@ -4,47 +4,30 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import se499.kayaanbackend.Manual_Generate.Group.entity.Group;
+import se499.kayaanbackend.Manual_Generate.contentInfo.entity.ContentInfo;
 
 @Entity
-@Table(name = "flashcards")
+@Table(name = "FLASHCARD")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Flashcard {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "flashcard_id")
+    private Integer flashcardId;
 
-    @Column(nullable = false)
-    private String createdByUsername;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "content_id", nullable = false)
+    private ContentInfo content;
 
-    @Column(nullable = false)
-    private String frontText;   // e.g. “Define polymorphism”
+    @Column(name = "front_text", nullable = false, columnDefinition = "TEXT")
+    private String frontText;
 
-    @Column(nullable = false)
-    private String backText;    // e.g. “Polymorphism is ...”
+    @Column(name = "back_text", nullable = false, columnDefinition = "TEXT")
+    private String backText;
 
-    private String subject;
-    private String difficulty;
-
-    private String category;
-
-    private String frontImageUrl;
-
-    private String backImageUrl;
-
-    @ElementCollection
-    @CollectionTable(name = "flashcard_tags", joinColumns = @JoinColumn(name = "flashcard_id"))
-    @Column(name = "tag")
-    private java.util.List<String> tags;
-
-    @ManyToMany
-    @JoinTable(
-            name = "flashcard_shared_groups",
-            joinColumns = @JoinColumn(name = "flashcard_id"),
-            inverseJoinColumns = @JoinColumn(name = "group_id")
-    )
-    private java.util.List<Group> sharedGroups;
 }

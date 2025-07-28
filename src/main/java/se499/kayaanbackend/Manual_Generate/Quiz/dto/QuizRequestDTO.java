@@ -11,11 +11,9 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class QuizRequestDTO {
-
     private String title;
-
-    private String category;
-    private List<Long> groupIds;
-
+    private String subject;
+    private String difficulty;
+    private List<String> tags;
     private List<QuizQuestionRequestDTO> questions;
 }

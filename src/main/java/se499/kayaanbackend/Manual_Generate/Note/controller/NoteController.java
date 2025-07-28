@@ -7,7 +7,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import se499.kayaanbackend.Manual_Generate.Note.dto.NoteRequestDTO;
 import se499.kayaanbackend.Manual_Generate.Note.dto.NoteResponseDTO;
-import se499.kayaanbackend.Manual_Generate.Note.service.NoteService;
+import se499.kayaanbackend.Manual_Generate.contentInfo.service.ContentServiceImpl;
 
 import java.util.List;
 
@@ -16,57 +16,107 @@ import java.util.List;
 @RequiredArgsConstructor
 public class NoteController {
 
-    private final NoteService noteService;
+    private final ContentServiceImpl contentServiceImpl;
 
     @PostMapping
-    public ResponseEntity<NoteResponseDTO> createNote(
-            @RequestBody NoteRequestDTO dto
-    ) {
+    public ResponseEntity<NoteResponseDTO> createNote(@RequestBody NoteRequestDTO dto) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        NoteResponseDTO saved = noteService.createNote(dto, username);
+        NoteResponseDTO saved = contentServiceImpl.createNote(dto, username);
         return ResponseEntity.ok(saved);
     }
 
     @GetMapping
     public ResponseEntity<List<NoteResponseDTO>> getAllNotes() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return ResponseEntity.ok(noteService.getAllNotesForUser(username));
+        return ResponseEntity.ok(contentServiceImpl.getAllNotes(username));
     }
 
     @GetMapping("/filter")
     public ResponseEntity<List<NoteResponseDTO>> filterNotes(
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) String subject
-    ) {
+            @RequestParam(required = false) String subject) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        if (category != null) {
-            return ResponseEntity.ok(noteService.getNotesByCategory(username, category));
-        }
         if (subject != null) {
-            return ResponseEntity.ok(noteService.getNotesBySubject(username, subject));
+            return ResponseEntity.ok(contentServiceImpl.getNotesBySubject(username, subject));
         }
-        return ResponseEntity.ok(noteService.getAllNotesForUser(username));
+        return ResponseEntity.ok(contentServiceImpl.getAllNotes(username));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<NoteResponseDTO> getNoteById(@PathVariable Long id) {
+    public ResponseEntity<NoteResponseDTO> getNoteById(@PathVariable Integer id) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        NoteResponseDTO dto = noteService.getNoteById(id, username);
+        NoteResponseDTO dto = contentServiceImpl.getNoteById(id, username);
         return ResponseEntity.ok(dto);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteNote(@PathVariable Long id) {
+    @PutMapping("/{id}")
+    public ResponseEntity<NoteResponseDTO> updateNote(
+            @PathVariable Integer id,
+            @RequestBody NoteRequestDTO dto) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        noteService.deleteNote(id, username);
+        NoteResponseDTO updated = contentServiceImpl.updateNote(id, dto, username);
+        return ResponseEntity.ok(updated);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteNote(@PathVariable Integer id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        contentServiceImpl.deleteNote(id, username);
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<NoteResponseDTO> updateNote(@PathVariable Long id,
-                                                      @RequestBody NoteRequestDTO dto) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        NoteResponseDTO updated = noteService.updateNote(id, dto, username);
-        return ResponseEntity.ok(updated);
-    }
+
+
+//    private final NoteService noteService;
+//
+//    @PostMapping
+//    public ResponseEntity<NoteResponseDTO> createNote(
+//            @RequestBody NoteRequestDTO dto
+//    ) {
+//        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+//        NoteResponseDTO saved = noteService.createNote(dto, username);
+//        return ResponseEntity.ok(saved);
+//    }
+//
+//    @GetMapping
+//    public ResponseEntity<List<NoteResponseDTO>> getAllNotes() {
+//        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+//        return ResponseEntity.ok(noteService.getAllNotesForUser(username));
+//    }
+//
+//    @GetMapping("/filter")
+//    public ResponseEntity<List<NoteResponseDTO>> filterNotes(
+//            @RequestParam(required = false) String category,
+//            @RequestParam(required = false) String subject
+//    ) {
+//        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+//        if (category != null) {
+//            return ResponseEntity.ok(noteService.getNotesByCategory(username, category));
+//        }
+//        if (subject != null) {
+//            return ResponseEntity.ok(noteService.getNotesBySubject(username, subject));
+//        }
+//        return ResponseEntity.ok(noteService.getAllNotesForUser(username));
+//    }
+//
+//    @GetMapping("/{id}")
+//    public ResponseEntity<NoteResponseDTO> getNoteById(@PathVariable Long id) {
+//        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+//        NoteResponseDTO dto = noteService.getNoteById(id, username);
+//        return ResponseEntity.ok(dto);
+//    }
+//
+//    @DeleteMapping("/{id}")
+//    public ResponseEntity<Void> deleteNote(@PathVariable Long id) {
+//        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+//        noteService.deleteNote(id, username);
+//        return ResponseEntity.noContent().build();
+//    }
+//
+//    @PutMapping("/{id}")
+//    public ResponseEntity<NoteResponseDTO> updateNote(@PathVariable Long id,
+//                                                      @RequestBody NoteRequestDTO dto) {
+//        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+//        NoteResponseDTO updated = noteService.updateNote(id, dto, username);
+//        return ResponseEntity.ok(updated);
+//    }
 }

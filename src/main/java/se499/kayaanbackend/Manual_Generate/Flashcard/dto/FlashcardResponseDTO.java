@@ -16,8 +16,5 @@ public class FlashcardResponseDTO {
     private String subject;
     private String difficulty;
     private String category;
-    private String frontImageUrl;
-    private String backImageUrl;
     private java.util.List<String> tags;
-    private java.util.List<Long> groupIds;
 }

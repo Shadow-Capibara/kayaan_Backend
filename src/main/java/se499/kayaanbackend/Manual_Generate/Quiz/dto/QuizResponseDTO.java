@@ -15,7 +15,6 @@ public class QuizResponseDTO {
     private String title;
     private String createdByUsername;
     private String category;
-    private List<Long> groupIds;
 
     // Return the questions back as a list of QuestionResponse (or reuse QuestionRequestDto here)
     private List<QuestionResponse> questions;
@@ -27,8 +26,5 @@ public class QuizResponseDTO {
         private QuizQuestionRequestDTO.QuestionType type;
         private List<String> choices;
         private String correctAnswer;
-        private String subject;
-        private String difficulty;
-        private List<String> tags;
     }
 }

@@ -12,11 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class QuizQuestionRequestDTO {
-
-
     private String questionText;
-
-    @NotNull
     private QuestionType type;
 
     // For MULTIPLE_CHOICE: a non-empty list of choices (e.g. ["Option A","Option B","Option C"])
@@ -29,7 +25,6 @@ public class QuizQuestionRequestDTO {
 
     private String subject;
     private String difficulty;
-    private List<String> tags;
 
     public enum QuestionType {
         MULTIPLE_CHOICE,

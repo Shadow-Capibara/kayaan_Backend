@@ -5,37 +5,29 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import se499.kayaanbackend.Manual_Generate.Group.entity.Group;
+import se499.kayaanbackend.Manual_Generate.contentInfo.entity.ContentInfo;
 
 import java.util.List;
+import java.util.Set;
 
 @Entity
-@Table(name = "quizzes")
+@Table(name = "QUIZ")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Quiz {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "quiz_id")
+    private Integer quizId;
 
-    @Column(nullable = false)
-    private String title;
-
-    @Column(nullable = false)
-    private String createdByUsername;
-
-    private String category;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "content_id", nullable = false)
+    private ContentInfo content;
 
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<QuizQuestion> questions;
-
-    @ManyToMany
-    @JoinTable(
-            name = "quiz_shared_groups",
-            joinColumns = @JoinColumn(name = "quiz_id"),
-            inverseJoinColumns = @JoinColumn(name = "group_id")
-    )
-    private List<Group> sharedGroups;
+    private Set<QuizQuestion> questions;
 }

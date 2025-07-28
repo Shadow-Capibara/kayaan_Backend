@@ -2,7 +2,7 @@ package se499.kayaanbackend.Manual_Generate.Note.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import se499.kayaanbackend.Manual_Generate.contentInfo.entity.ContentInformation;
+import se499.kayaanbackend.Manual_Generate.contentInfo.entity.ContentInfo;
 
 import java.time.LocalDateTime;
 
@@ -13,14 +13,14 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class NoteInformation {
+public class NoteInfo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer noteID;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "contentInfoID", nullable = false)
-    private ContentInformation contentInformation;
+    private ContentInfo contentInformation;
 
     @Column(name = "note_text", columnDefinition = "LONGTEXT")
     private String noteText;

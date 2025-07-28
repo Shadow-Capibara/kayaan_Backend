@@ -19,7 +19,7 @@ public class NoteImage {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "noteID", nullable = false)
-    private NoteInformation noteInformation;
+    private NoteInfo noteInformation;
 
     @Column(nullable = false)
     private String imageURL;

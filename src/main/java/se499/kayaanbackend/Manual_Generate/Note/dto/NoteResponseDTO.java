@@ -17,8 +17,5 @@ public class NoteResponseDTO {
     private String content;
     private String subject;
     private String difficulty;
-    private String category;
-    private String imageUrl;
     private List<String> tags;
-    private List<Long> groupIds;
 }

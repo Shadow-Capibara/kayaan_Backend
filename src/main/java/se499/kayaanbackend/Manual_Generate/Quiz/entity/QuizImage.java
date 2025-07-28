@@ -19,7 +19,7 @@ public class QuizImage {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quizInfoID", nullable = false)
-    private QuizInformation quizInformation;
+    private QuizInfo quizInformation;
 
     @Column(nullable = false)
     private String imageURL;

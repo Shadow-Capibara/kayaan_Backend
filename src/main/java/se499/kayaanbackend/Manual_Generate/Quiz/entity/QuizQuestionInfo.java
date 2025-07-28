@@ -12,14 +12,14 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class QuizQuestionInformation {
+public class QuizQuestionInfo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer questionID;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quizInfoID", nullable = false)
-    private QuizInformation quizInformation;
+    private QuizInfo quizInformation;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

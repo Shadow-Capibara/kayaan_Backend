@@ -2,7 +2,7 @@ package se499.kayaanbackend.Manual_Generate.Quiz.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import se499.kayaanbackend.Manual_Generate.contentInfo.entity.ContentInformation;
+import se499.kayaanbackend.Manual_Generate.contentInfo.entity.ContentInfo;
 
 import java.time.LocalDateTime;
 
@@ -13,14 +13,14 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class QuizInformation {
+public class QuizInfo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer quizInfoID;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "contentInfoID", nullable = false)
-    private ContentInformation contentInformation;
+    private ContentInfo contentInformation;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

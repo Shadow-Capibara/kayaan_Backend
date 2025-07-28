@@ -5,50 +5,26 @@ import lombok.*;
 
 import java.util.List;
 import se499.kayaanbackend.Manual_Generate.Group.entity.Group;
+import se499.kayaanbackend.Manual_Generate.contentInfo.entity.ContentInfo;
 
 @Entity
-@Table(name = "notes")
+@Table(name = "NOTE")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Note {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "note_id")
+    private Integer noteId;
 
-    @Column(nullable = false)
-    private String createdByUsername;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "content_id", nullable = false)
+    private ContentInfo content;
 
-    @Column(nullable = false)
-    private String title;
-
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String content;
-
-    @Column(nullable = true)
-    private String subject;
-
-    @Column(nullable = true)
-    private String difficulty;
-
-    @Column(nullable = true)
-    private String category;
-
-    @Column(nullable = true)
-    private String imageUrl;
-
-    @ManyToMany
-    @JoinTable(
-            name = "note_shared_groups",
-            joinColumns = @JoinColumn(name = "note_id"),
-            inverseJoinColumns = @JoinColumn(name = "group_id")
-    )
-    private List<Group> sharedGroups;
-
-    @ElementCollection
-    @CollectionTable(name = "note_tags", joinColumns = @JoinColumn(name = "note_id"))
-    @Column(name = "tag")
-    private List<String> tags;
+    @Column(name = "note_text", nullable = false, columnDefinition = "TEXT")
+    private String noteText;
 }
