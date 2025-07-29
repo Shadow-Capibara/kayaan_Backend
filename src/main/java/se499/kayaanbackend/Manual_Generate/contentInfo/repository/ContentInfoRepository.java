@@ -13,11 +13,11 @@ public interface ContentInfoRepository extends JpaRepository<ContentInfo, Intege
     List<ContentInfo> findByUserCreatedAtUsernameAndContentType(String username, String contentType);
     List<ContentInfo> findByUserCreatedAtUsername(String username);
 
-    @Query("SELECT ci FROM ContentInformation ci WHERE ci.userCreatedAt.username = :username " +
+    @Query("SELECT ci FROM ContentInfo ci WHERE ci.userCreatedAt.username = :username " +
             "AND ci.contentType = :contentType AND ci.contentSubject = :subject")
     List<ContentInfo> findByUsernameTypeAndSubject(@Param("username") String username,
-                                                          @Param("contentType") String contentType,
-                                                          @Param("subject") String subject);
+                                                   @Param("contentType") String contentType,
+                                                   @Param("subject") String subject);
 
     Optional<ContentInfo> findByContentIdAndUserCreatedAtUsername(Integer contentId, String username);
 }

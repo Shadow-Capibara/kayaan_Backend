@@ -1,6 +1,5 @@
 package se499.kayaanbackend.Manual_Generate.contentInfo.service;
 
-
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,13 +23,15 @@ import se499.kayaanbackend.security.user.User;
 import se499.kayaanbackend.security.user.UserRepository;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class ContentServiceImpl {
+public class ContentServiceImpl implements ContentService {
 
     private final ContentInfoRepository contentRepository;
     private final NoteRepository noteRepository;
@@ -45,12 +46,12 @@ public class ContentServiceImpl {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         ContentInfo content = ContentInfo.builder()
-                .contentTitle(dto.getTitle())
-                .contentTag(dto.getTags() != null ? String.join(",", dto.getTags()) : null)
-                .contentSubject(dto.getSubject())
+                .contentTitle(dto.getTitle() != null ? dto.getTitle() : "Untitled")
+                .contentTag(dto.getTags() != null ? String.join(",", dto.getTags()) : "")
+                .contentSubject(dto.getSubject() != null ? dto.getSubject() : "General")
                 .contentDifficulty(mapDifficulty(dto.getDifficulty()))
                 .contentType("NOTE")
-                .userCreated(user)
+                .userCreatedAt(user)
                 .build();
 
         content = contentRepository.save(content);
@@ -71,7 +72,7 @@ public class ContentServiceImpl {
                 .orElseThrow(() -> new RuntimeException("Note not found or unauthorized"));
 
         content.setContentTitle(dto.getTitle());
-        content.setContentTag(dto.getTags() != null ? String.join(",", dto.getTags()) : null);
+        content.setContentTag(dto.getTags() != null ? String.join(",", dto.getTags()) : "");
         content.setContentSubject(dto.getSubject());
         content.setContentDifficulty(mapDifficulty(dto.getDifficulty()));
 
@@ -96,18 +97,6 @@ public class ContentServiceImpl {
 
     @Override
     @Transactional(readOnly = true)
-    public NoteResponseDTO getNoteById(Integer contentId, String username) {
-        ContentInfo content = contentRepository.findByContentIdAndUserCreatedAtUsername(contentId, username)
-                .orElseThrow(() -> new RuntimeException("Note not found or unauthorized"));
-
-        Note note = noteRepository.findByContent_ContentId(contentId)
-                .orElseThrow(() -> new RuntimeException("Note data not found"));
-
-        return mapToNoteResponse(content, note);
-    }
-
-    @Override
-    @Transactional(readOnly = true)  // ← This is correct usage with Spring's @Transactional
     public NoteResponseDTO getNoteById(Integer contentId, String username) {
         ContentInfo content = contentRepository.findByContentIdAndUserCreatedAtUsername(contentId, username)
                 .orElseThrow(() -> new RuntimeException("Note not found or unauthorized"));
@@ -158,34 +147,35 @@ public class ContentServiceImpl {
 
         ContentInfo content = ContentInfo.builder()
                 .contentTitle(dto.getTitle())
-                .contentTag(dto.getTags() != null ? String.join(",", dto.getTags()) : null)
-                .contentSubject(subject)
+                .contentTag(dto.getTags() != null ? String.join(",", dto.getTags()) : "")
+                .contentSubject(subject != null ? subject : "")
                 .contentDifficulty(mapDifficulty(dto.getDifficulty()))
                 .contentType("QUIZ")
-                .userCreated(user)
+                .userCreatedAt(user)
                 .build();
 
         content = contentRepository.save(content);
 
         Quiz quiz = Quiz.builder()
                 .content(content)
-                .questions(new ArrayList<>())
+                .questions(new HashSet<>())
                 .build();
 
         quiz = quizRepository.save(quiz);
 
         // Add questions
         if (dto.getQuestions() != null) {
+            final Quiz finalQuiz = quiz;  // Create final reference
             for (QuizQuestionRequestDTO questionDto : dto.getQuestions()) {
                 QuizQuestion question = QuizQuestion.builder()
-                        .quiz(quiz)
+                        .quiz(finalQuiz)
                         .questionText(questionDto.getQuestionText())
                         .questionType(mapQuestionType(questionDto.getType()))
                         .choices(questionDto.getChoices() != null ? String.join("|", questionDto.getChoices()) : null)
                         .correctAnswer(questionDto.getCorrectAnswer())
                         .build();
 
-                quiz.getQuestions().add(question);
+                finalQuiz.getQuestions().add(question);
             }
             quiz = quizRepository.save(quiz);
         }
@@ -199,8 +189,8 @@ public class ContentServiceImpl {
                 .orElseThrow(() -> new RuntimeException("Quiz not found or unauthorized"));
 
         content.setContentTitle(dto.getTitle());
-        content.setContentTag(dto.getTags() != null ? String.join(",", dto.getTags()) : null);
-        content.setContentSubject(dto.getSubject());
+        content.setContentTag(dto.getTags() != null ? String.join(",", dto.getTags()) : "");
+        content.setContentSubject(dto.getSubject() != null ? dto.getSubject() : "");
         content.setContentDifficulty(mapDifficulty(dto.getDifficulty()));
 
         content = contentRepository.save(content);
@@ -213,17 +203,18 @@ public class ContentServiceImpl {
 
         // Add new questions
         if (dto.getQuestions() != null) {
-            for (QuizQuestionRequestDTO questionDto : dto.getQuestions()) {
+            Quiz finalQuiz = quiz;
+            dto.getQuestions().forEach(questionDto -> {
                 QuizQuestion question = QuizQuestion.builder()
-                        .quiz(quiz)
+                        .quiz(finalQuiz)
                         .questionText(questionDto.getQuestionText())
                         .questionType(mapQuestionType(questionDto.getType()))
                         .choices(questionDto.getChoices() != null ? String.join("|", questionDto.getChoices()) : null)
                         .correctAnswer(questionDto.getCorrectAnswer())
                         .build();
 
-                quiz.getQuestions().add(question);
-            }
+                finalQuiz.getQuestions().add(question);
+            });
         }
 
         quiz = quizRepository.save(quiz);
@@ -284,9 +275,9 @@ public class ContentServiceImpl {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         ContentInfo content = ContentInfo.builder()
-                .contentTitle(dto.getTitle() != null ? dto.getTitle() : dto.getFrontText())
-                .contentTags(dto.getTags() != null ? String.join(",", dto.getTags()) : null)
-                .contentSubject(dto.getSubject())
+                .contentTitle(dto.getFrontText())  // Using front text as title
+                .contentTag(dto.getTags() != null ? String.join(",", dto.getTags()) : "")
+                .contentSubject(dto.getSubject() != null ? dto.getSubject() : "")
                 .contentDifficulty(mapDifficulty(dto.getDifficulty()))
                 .contentType("FLASHCARD")
                 .userCreatedAt(user)
@@ -310,9 +301,9 @@ public class ContentServiceImpl {
         ContentInfo content = contentRepository.findByContentIdAndUserCreatedAtUsername(contentId, username)
                 .orElseThrow(() -> new RuntimeException("Flashcard not found or unauthorized"));
 
-        content.setContentTitle(dto.getTitle() != null ? dto.getTitle() : dto.getFrontText());
-        content.setContentTag(dto.getTags() != null ? String.join(",", dto.getTags()) : null);
-        content.setContentSubject(dto.getSubject());
+        content.setContentTitle(dto.getFrontText());
+        content.setContentTag(dto.getTags() != null ? String.join(",", dto.getTags()) : "");
+        content.setContentSubject(dto.getSubject() != null ? dto.getSubject() : "");
         content.setContentDifficulty(mapDifficulty(dto.getDifficulty()));
 
         content = contentRepository.save(content);
@@ -377,28 +368,42 @@ public class ContentServiceImpl {
     private ContentInfo.ContentDifficulty mapDifficulty(String difficulty) {
         if (difficulty == null) return ContentInfo.ContentDifficulty.Easy;
 
-        return switch (difficulty.toUpperCase()) {
-            case "EASY", "MEDIUM" -> ContentInfo.ContentDifficulty.Medium;
-            case "HARD" -> ContentInfo.ContentDifficulty.Hard;
-            default -> ContentInfo.ContentDifficulty.Easy;
-        };
+        switch (difficulty.toUpperCase()) {
+            case "EASY":
+                return ContentInfo.ContentDifficulty.Easy;
+            case "MEDIUM":
+                return ContentInfo.ContentDifficulty.Medium;
+            case "HARD":
+                return ContentInfo.ContentDifficulty.Hard;
+            default:
+                return ContentInfo.ContentDifficulty.Easy;
+        }
     }
 
     private QuizQuestion.QuestionType mapQuestionType(QuizQuestionRequestDTO.QuestionType type) {
-        return switch (type) {
-            case MULTIPLE_CHOICE, TRUE_FALSE -> QuizQuestion.QuestionType.TRUE_FALSE;
-            case OPEN_ENDED -> QuizQuestion.QuestionType.OPEN_END;
-            default -> QuizQuestion.QuestionType.MULTIPLE_CHOICE;
-        };
+        switch (type) {
+            case MULTIPLE_CHOICE:
+                return QuizQuestion.QuestionType.MULTIPLE_CHOICE;
+            case TRUE_FALSE:
+                return QuizQuestion.QuestionType.TRUE_FALSE;
+            case OPEN_ENDED:
+                return QuizQuestion.QuestionType.OPEN_END;
+            default:
+                return QuizQuestion.QuestionType.MULTIPLE_CHOICE;
+        }
     }
 
     private NoteResponseDTO mapToNoteResponse(ContentInfo content, Note note) {
         return NoteResponseDTO.builder()
                 .id(content.getContentId().longValue())
+                .createdByUsername(content.getUserCreatedAt().getUsername())
                 .title(content.getContentTitle())
                 .content(note.getNoteText())
                 .subject(content.getContentSubject())
                 .difficulty(content.getContentDifficulty() != null ? content.getContentDifficulty().name() : null)
+                .tags(content.getContentTag() != null && !content.getContentTag().isEmpty()
+                        ? Arrays.asList(content.getContentTag().split(","))
+                        : new ArrayList<>())
                 .build();
     }
 
@@ -408,7 +413,7 @@ public class ContentServiceImpl {
                         .id(q.getQuestionId().longValue())
                         .questionText(q.getQuestionText())
                         .type(mapToResponseQuestionType(q.getQuestionType()))
-                        .choices(q.getChoices() != null ? List.of(q.getChoices().split("\\|")) : null)
+                        .choices(q.getChoices() != null ? Arrays.asList(q.getChoices().split("\\|")) : null)
                         .correctAnswer(q.getCorrectAnswer())
                         .build())
                 .collect(Collectors.toList());
@@ -423,11 +428,16 @@ public class ContentServiceImpl {
     }
 
     private QuizQuestionRequestDTO.QuestionType mapToResponseQuestionType(QuizQuestion.QuestionType type) {
-        return switch (type) {
-            case MULTIPLE_CHOICE, TRUE_FALSE -> QuizQuestionRequestDTO.QuestionType.TRUE_FALSE;
-            case OPEN_END -> QuizQuestionRequestDTO.QuestionType.OPEN_ENDED;
-            default -> QuizQuestionRequestDTO.QuestionType.MULTIPLE_CHOICE;
-        };
+        switch (type) {
+            case MULTIPLE_CHOICE:
+                return QuizQuestionRequestDTO.QuestionType.MULTIPLE_CHOICE;
+            case TRUE_FALSE:
+                return QuizQuestionRequestDTO.QuestionType.TRUE_FALSE;
+            case OPEN_END:
+                return QuizQuestionRequestDTO.QuestionType.OPEN_ENDED;
+            default:
+                return QuizQuestionRequestDTO.QuestionType.MULTIPLE_CHOICE;
+        }
     }
 
     private FlashcardResponseDTO mapToFlashcardResponse(ContentInfo content, Flashcard flashcard) {
@@ -439,7 +449,9 @@ public class ContentServiceImpl {
                 .subject(content.getContentSubject())
                 .difficulty(content.getContentDifficulty() != null ? content.getContentDifficulty().name() : null)
                 .category(content.getContentType())
-                .tags(content.getTagsList())
+                .tags(content.getContentTag() != null && !content.getContentTag().isEmpty()
+                        ? Arrays.asList(content.getContentTag().split(","))
+                        : new ArrayList<>())
                 .build();
     }
 }

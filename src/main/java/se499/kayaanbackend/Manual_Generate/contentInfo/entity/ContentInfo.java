@@ -24,25 +24,25 @@ public class ContentInfo {
     @Column(name = "contentId")
     private Integer contentId;
 
-    @Column(name = "contentTitle",nullable = false)
+    @Column(name = "contentTitle", nullable = false)
     private String contentTitle;
 
-    @Column(name = "contentTag",length = 500, nullable = false)
+    @Column(name = "contentTag", length = 500, nullable = false)
     private String contentTag;
 
     @Column(name = "contentSubject", length = 100, nullable = false)
     private String contentSubject;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "contentDifficulty",nullable = false)
+    @Column(name = "contentDifficulty", nullable = false)
     private ContentDifficulty contentDifficulty;
 
     @Column(name = "contentType", nullable = false, length = 50)
     private String contentType;
 
-   @ManyToOne(fetch = FetchType.LAZY)
-   @JoinColumn(name = "user_created", nullable = false)
-   private User userCreated;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_created", nullable = false)
+    private User userCreatedAt;  // Keep the field name as expected by the service
 
     @Column(name = "created_at")
     @Builder.Default
@@ -72,9 +72,7 @@ public class ContentInfo {
         updatedAt = LocalDateTime.now();
     }
 
-    private LocalDateTime created_at;
-    private LocalDateTime updated_at;
-    private LocalDateTime deleted_at;
-
-    public enum ContentDifficulty { Easy, Medium, Hard }
+    public enum ContentDifficulty {
+        Easy, Medium, Hard
+    }
 }

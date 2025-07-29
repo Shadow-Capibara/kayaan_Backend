@@ -18,4 +18,5 @@ public class NoteResponseDTO {
     private String subject;
     private String difficulty;
     private List<String> tags;
+
 }

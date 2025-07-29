@@ -24,19 +24,11 @@ public class NoteServiceImpl implements NoteService {
 
     @Override
     public NoteResponseDTO createNote(NoteRequestDTO dto, String username) {
-        List<Group> groups = dto.getGroupIds() == null ? java.util.Collections.emptyList() :
-                groupRepository.findAllById(dto.getGroupIds());
-
         Note note = Note.builder()
-                .title(dto.getTitle())
                 .content(dto.getContent())
-                .imageUrl(dto.getImageUrl())
                 .subject(dto.getSubject())
                 .difficulty(dto.getDifficulty())
-                .category(dto.getCategory())
                 .tags(dto.getTags())
-                .createdByUsername(username)
-                .sharedGroups(groups)
                 .build();
 
         Note saved = noteRepository.save(note);
@@ -45,12 +37,9 @@ public class NoteServiceImpl implements NoteService {
                 .createdByUsername(saved.getCreatedByUsername())
                 .title(saved.getTitle())
                 .content(saved.getContent())
-                .imageUrl(saved.getImageUrl())
                 .subject(saved.getSubject())
                 .difficulty(saved.getDifficulty())
-                .category(saved.getCategory())
                 .tags(saved.getTags())
-                .groupIds(saved.getSharedGroups().stream().map(Group::getId).collect(Collectors.toList()))
                 .build();
     }
 
