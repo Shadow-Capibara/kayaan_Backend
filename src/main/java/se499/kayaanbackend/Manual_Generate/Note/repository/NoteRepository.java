@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface NoteRepository extends JpaRepository<Note, Long> {
-    Optional<Note> findByContent_ContentId(Integer contentId);
+    Optional<Note> findByContent_ContentId(Long contentId);
 
     @Query("SELECT n FROM Note n JOIN n.content c WHERE c.userCreatedAt.username = :username")
     List<Note> findAllByUsername(@Param("username") String username);

@@ -6,6 +6,8 @@ import lombok.*;
 import se499.kayaanbackend.Manual_Generate.Group.entity.Group;
 import se499.kayaanbackend.Manual_Generate.contentInfo.entity.ContentInfo;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "FLASHCARD")
 @Getter
@@ -18,7 +20,7 @@ public class Flashcard {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "flashcard_id")
-    private Integer flashcardId;
+    private Long flashcardId;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "content_id", nullable = false)
@@ -29,5 +31,8 @@ public class Flashcard {
 
     @Column(name = "back_text", nullable = false, columnDefinition = "TEXT")
     private String backText;
+
+    private LocalDateTime created_at;
+    private LocalDateTime updated_at;
 
 }

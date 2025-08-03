@@ -43,7 +43,7 @@ public class FlashcardController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<FlashcardResponseDTO> getFlashcardById(@PathVariable Integer id) {
+    public ResponseEntity<FlashcardResponseDTO> getFlashcardById(@PathVariable Long id) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         FlashcardResponseDTO dto = contentServiceImpl.getFlashcardById(id, username);
         return ResponseEntity.ok(dto);
@@ -51,7 +51,7 @@ public class FlashcardController {
 
     @PutMapping("/{id}")
     public ResponseEntity<FlashcardResponseDTO> updateFlashcard(
-            @PathVariable Integer id,
+            @PathVariable Long id,
             @RequestBody FlashcardRequestDTO dto) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         FlashcardResponseDTO updated = contentServiceImpl.updateFlashcard(id, dto, username);
@@ -59,7 +59,7 @@ public class FlashcardController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteFlashcard(@PathVariable Integer id) {
+    public ResponseEntity<Void> deleteFlashcard(@PathVariable Long id) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         contentServiceImpl.deleteFlashcard(id, username);
         return ResponseEntity.noContent().build();

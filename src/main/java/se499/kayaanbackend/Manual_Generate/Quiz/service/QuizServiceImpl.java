@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import se499.kayaanbackend.Manual_Generate.Quiz.dto.QuizQuestionRequestDTO;
 import se499.kayaanbackend.Manual_Generate.Quiz.dto.QuizRequestDTO;
 import se499.kayaanbackend.Manual_Generate.Quiz.dto.QuizResponseDTO;
-import se499.kayaanbackend.Manual_Generate.Quiz.entity.Quiz;
 import se499.kayaanbackend.Manual_Generate.Quiz.entity.QuizQuestion;
 import se499.kayaanbackend.Manual_Generate.Quiz.repository.QuizQuestionRepository;
 import se499.kayaanbackend.Manual_Generate.Quiz.repository.QuizRepository;

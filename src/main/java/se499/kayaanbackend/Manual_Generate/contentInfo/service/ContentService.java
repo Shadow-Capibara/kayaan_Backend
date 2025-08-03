@@ -11,25 +11,25 @@ import java.util.List;
 
 public interface ContentService {
     NoteResponseDTO createNote(NoteRequestDTO dto, String username);
-    NoteResponseDTO updateNote(Integer contentId, NoteRequestDTO dto, String username);
-    void deleteNote(Integer contentId, String username);
-    NoteResponseDTO getNoteById(Integer contentId, String username);
+    NoteResponseDTO updateNote(Long contentId, NoteRequestDTO dto, String username);
+    void deleteNote(Long contentId, String username);
+    NoteResponseDTO getNoteById(Long contentId, String username);
     List<NoteResponseDTO> getAllNotes(String username);
     List<NoteResponseDTO> getNotesBySubject(String username, String subject);
 
     // Quiz operations
     QuizResponseDTO createQuiz(QuizRequestDTO dto, String username);
-    QuizResponseDTO updateQuiz(Integer contentId, QuizRequestDTO dto, String username);
-    void deleteQuiz(Integer contentId, String username);
-    QuizResponseDTO getQuizById(Integer contentId, String username);
+    QuizResponseDTO updateQuiz(Long contentId, QuizRequestDTO dto, String username);
+    void deleteQuiz(Long contentId, String username);
+    QuizResponseDTO getQuizById(Long contentId, String username);
     List<QuizResponseDTO> getAllQuizzes(String username);
     List<QuizResponseDTO> getQuizzesBySubject(String username, String subject);
 
     // Flashcard operations
     FlashcardResponseDTO createFlashcard(FlashcardRequestDTO dto, String username);
-    FlashcardResponseDTO updateFlashcard(Integer contentId, FlashcardRequestDTO dto, String username);
-    void deleteFlashcard(Integer contentId, String username);
-    FlashcardResponseDTO getFlashcardById(Integer contentId, String username);
+    FlashcardResponseDTO updateFlashcard(Long contentId, FlashcardRequestDTO dto, String username);
+    void deleteFlashcard(Long contentId, String username);
+    FlashcardResponseDTO getFlashcardById(Long contentId, String username);
     List<FlashcardResponseDTO> getAllFlashcards(String username);
     List<FlashcardResponseDTO> getFlashcardsBySubject(String username, String subject);
 }

@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 public class QuizImage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer imageID;
+    private Long imageID;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quizInfoID", nullable = false)

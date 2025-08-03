@@ -42,7 +42,7 @@ public class NoteController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<NoteResponseDTO> getNoteById(@PathVariable Integer id) {
+    public ResponseEntity<NoteResponseDTO> getNoteById(@PathVariable Long id) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         NoteResponseDTO dto = contentServiceImpl.getNoteById(id, username);
         return ResponseEntity.ok(dto);
@@ -50,7 +50,7 @@ public class NoteController {
 
     @PutMapping("/{id}")
     public ResponseEntity<NoteResponseDTO> updateNote(
-            @PathVariable Integer id,
+            @PathVariable Long id,
             @RequestBody NoteRequestDTO dto) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         NoteResponseDTO updated = contentServiceImpl.updateNote(id, dto, username);
@@ -58,7 +58,7 @@ public class NoteController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteNote(@PathVariable Integer id) {
+    public ResponseEntity<Void> deleteNote(@PathVariable Long id) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         contentServiceImpl.deleteNote(id, username);
         return ResponseEntity.noContent().build();

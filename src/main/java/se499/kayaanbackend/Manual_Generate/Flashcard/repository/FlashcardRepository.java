@@ -3,13 +3,12 @@ package se499.kayaanbackend.Manual_Generate.Flashcard.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import se499.kayaanbackend.Manual_Generate.Flashcard.entity.Flashcard;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface FlashcardRepository extends JpaRepository<Flashcard, Long> {
-    Optional<Flashcard> findByContent_ContentId(Integer contentId);
+    Optional<Flashcard> findByContent_ContentId(Long contentId);
 
     @Query("SELECT f FROM Flashcard f JOIN f.content c WHERE c.userCreatedAt.username = :username")
     List<Flashcard> findAllByUsername(@Param("username") String username);

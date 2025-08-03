@@ -16,7 +16,7 @@ public class QuizQuestionChoice {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "choice_id")
-    private Integer choiceID;
+    private Long choiceID;
 
 
     @ManyToOne(fetch = FetchType.LAZY)

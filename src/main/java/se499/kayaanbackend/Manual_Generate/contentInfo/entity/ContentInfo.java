@@ -2,10 +2,7 @@ package se499.kayaanbackend.Manual_Generate.contentInfo.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import se499.kayaanbackend.Manual_Generate.Flashcard.entity.Flashcard;
 import se499.kayaanbackend.Manual_Generate.Note.entity.Note;
-import se499.kayaanbackend.Manual_Generate.Quiz.entity.Quiz;
-import se499.kayaanbackend.redesign.entity.UserNew;
 import se499.kayaanbackend.security.user.User;
 
 import java.time.LocalDateTime;
@@ -22,7 +19,7 @@ public class ContentInfo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "contentId")
-    private Integer contentId;
+    private Long contentId;
 
     @Column(name = "contentTitle", nullable = false)
     private String contentTitle;

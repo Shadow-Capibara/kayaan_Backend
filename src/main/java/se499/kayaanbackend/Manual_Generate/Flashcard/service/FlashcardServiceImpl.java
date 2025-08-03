@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import se499.kayaanbackend.Manual_Generate.Flashcard.dto.FlashcardRequestDTO;
 import se499.kayaanbackend.Manual_Generate.Flashcard.dto.FlashcardResponseDTO;
-import se499.kayaanbackend.Manual_Generate.Flashcard.entity.Flashcard;
 import se499.kayaanbackend.Manual_Generate.Flashcard.repository.FlashcardRepository;
 import se499.kayaanbackend.Manual_Generate.Group.entity.Group;
 import se499.kayaanbackend.Manual_Generate.Group.repository.GroupRepository;

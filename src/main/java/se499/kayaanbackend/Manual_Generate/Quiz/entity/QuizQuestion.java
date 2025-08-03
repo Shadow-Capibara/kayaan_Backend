@@ -4,6 +4,7 @@ package se499.kayaanbackend.Manual_Generate.Quiz.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -18,8 +19,8 @@ public class QuizQuestion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "question_id")
-    private Integer questionId;
+    @Column(name = "question_ID")
+    private Long questionID;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quiz_id", nullable = false)
@@ -28,9 +29,6 @@ public class QuizQuestion {
     @Column(name = "question_text", nullable = false, columnDefinition = "TEXT")
     private String questionText;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "question_type")
-    private QuestionType questionType;
 
     @Column(name = "choices", columnDefinition = "TEXT")
     private String choices; // JSON string for multiple choices
@@ -44,4 +42,9 @@ public class QuizQuestion {
     public enum QuestionType {
         MULTIPLE_CHOICE, TRUE_FALSE, OPEN_END
     }
+
+    private LocalDateTime created_at;
+    private LocalDateTime updated_at;
+
+
 }

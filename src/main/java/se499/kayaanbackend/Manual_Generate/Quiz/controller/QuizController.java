@@ -46,7 +46,7 @@ public class QuizController {
     }
 
     @GetMapping("/{quizId}")
-    public ResponseEntity<QuizResponseDTO> getQuizById(@PathVariable Integer quizId) {
+    public ResponseEntity<QuizResponseDTO> getQuizById(@PathVariable Long quizId) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         QuizResponseDTO quiz = contentServiceImpl.getQuizById(quizId, username);
         return ResponseEntity.ok(quiz);
@@ -54,7 +54,7 @@ public class QuizController {
 
     @PutMapping("/{quizId}")
     public ResponseEntity<QuizResponseDTO> updateQuiz(
-            @PathVariable Integer quizId,
+            @PathVariable Long quizId,
             @RequestBody QuizRequestDTO dto) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         QuizResponseDTO updated = contentServiceImpl.updateQuiz(quizId, dto, username);
@@ -62,7 +62,7 @@ public class QuizController {
     }
 
     @DeleteMapping("/{quizId}")
-    public ResponseEntity<Void> deleteQuiz(@PathVariable Integer quizId) {
+    public ResponseEntity<Void> deleteQuiz(@PathVariable Long quizId) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         contentServiceImpl.deleteQuiz(quizId, username);
         return ResponseEntity.noContent().build();

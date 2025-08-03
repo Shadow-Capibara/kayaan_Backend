@@ -9,7 +9,7 @@ import se499.kayaanbackend.Manual_Generate.contentInfo.entity.ContentInfo;
 import java.util.List;
 import java.util.Optional;
 
-public interface ContentInfoRepository extends JpaRepository<ContentInfo, Integer> {
+public interface ContentInfoRepository extends JpaRepository<ContentInfo, Long> {
     List<ContentInfo> findByUserCreatedAtUsernameAndContentType(String username, String contentType);
     List<ContentInfo> findByUserCreatedAtUsername(String username);
 
@@ -19,5 +19,5 @@ public interface ContentInfoRepository extends JpaRepository<ContentInfo, Intege
                                                    @Param("contentType") String contentType,
                                                    @Param("subject") String subject);
 
-    Optional<ContentInfo> findByContentIdAndUserCreatedAtUsername(Integer contentId, String username);
+    Optional<ContentInfo> findByContentIdAndUserCreatedAtUsername(Long contentId, String username);
 }
