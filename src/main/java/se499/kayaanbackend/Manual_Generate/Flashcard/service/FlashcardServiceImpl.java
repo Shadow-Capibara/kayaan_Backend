@@ -1,18 +1,19 @@
 package se499.kayaanbackend.Manual_Generate.Flashcard.service;
 
-import jakarta.persistence.EntityNotFoundException;
-import org.springframework.transaction.annotation.Transactional;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import se499.kayaanbackend.Manual_Generate.Flashcard.dto.FlashcardRequestDTO;
 import se499.kayaanbackend.Manual_Generate.Flashcard.dto.FlashcardResponseDTO;
 import se499.kayaanbackend.Manual_Generate.Flashcard.entity.Flashcard;
 import se499.kayaanbackend.Manual_Generate.Flashcard.repository.FlashcardRepository;
-import se499.kayaanbackend.Manual_Generate.Group.entity.Group;
-import se499.kayaanbackend.Manual_Generate.Group.repository.GroupRepository;
-
-import java.util.List;
-import java.util.stream.Collectors;
+import se499.kayaanbackend.Study_Group.entity.Group;
+import se499.kayaanbackend.Study_Group.repository.GroupRepository;
 
 @Service
 @RequiredArgsConstructor

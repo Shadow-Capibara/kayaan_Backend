@@ -1,9 +1,22 @@
 package se499.kayaanbackend.Manual_Generate.Flashcard.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
-
-import se499.kayaanbackend.Manual_Generate.Group.entity.Group;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import se499.kayaanbackend.Study_Group.entity.Group;
 
 @Entity
 @Table(name = "flashcards")

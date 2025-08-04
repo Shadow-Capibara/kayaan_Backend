@@ -1,10 +1,14 @@
 package se499.kayaanbackend.Manual_Generate.Quiz.service;
 
 
-import jakarta.persistence.EntityNotFoundException;
-import org.springframework.transaction.annotation.Transactional;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import se499.kayaanbackend.Manual_Generate.Quiz.dto.QuizQuestionRequestDTO;
 import se499.kayaanbackend.Manual_Generate.Quiz.dto.QuizRequestDTO;
 import se499.kayaanbackend.Manual_Generate.Quiz.dto.QuizResponseDTO;
@@ -12,11 +16,8 @@ import se499.kayaanbackend.Manual_Generate.Quiz.entity.Quiz;
 import se499.kayaanbackend.Manual_Generate.Quiz.entity.QuizQuestion;
 import se499.kayaanbackend.Manual_Generate.Quiz.repository.QuizQuestionRepository;
 import se499.kayaanbackend.Manual_Generate.Quiz.repository.QuizRepository;
-import se499.kayaanbackend.Manual_Generate.Group.entity.Group;
-import se499.kayaanbackend.Manual_Generate.Group.repository.GroupRepository;
-
-import java.util.List;
-import java.util.stream.Collectors;
+import se499.kayaanbackend.Study_Group.entity.Group;
+import se499.kayaanbackend.Study_Group.repository.GroupRepository;
 
 @Service
 @RequiredArgsConstructor

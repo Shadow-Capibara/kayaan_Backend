@@ -1,19 +1,20 @@
 package se499.kayaanbackend.Manual_Generate.Note.service;
 
 
-import jakarta.persistence.EntityNotFoundException;
-import org.springframework.transaction.annotation.Transactional;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import se499.kayaanbackend.Manual_Generate.Note.dto.NoteRequestDTO;
 import se499.kayaanbackend.Manual_Generate.Note.dto.NoteResponseDTO;
 import se499.kayaanbackend.Manual_Generate.Note.entity.Note;
 import se499.kayaanbackend.Manual_Generate.Note.repository.NoteRepository;
-import se499.kayaanbackend.Manual_Generate.Group.entity.Group;
-import se499.kayaanbackend.Manual_Generate.Group.repository.GroupRepository;
-
-import java.util.List;
-import java.util.stream.Collectors;
+import se499.kayaanbackend.Study_Group.entity.Group;
+import se499.kayaanbackend.Study_Group.repository.GroupRepository;
 
 @Service
 @RequiredArgsConstructor
