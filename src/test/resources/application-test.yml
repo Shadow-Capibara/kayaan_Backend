@@ -1,0 +1,34 @@
+spring:
+  profiles:
+    active: test
+  application:
+    name: Kayaan-Backend-Test
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+application:
+  security:
+    jwt:
+      secret-key: test-secret-key-for-testing-purposes-only
+      expiration: 3600000
+      refresh-token:
+        expiration: 86400000
+
+avatar:
+  upload-dir: ${user.dir}/test-uploads/avatars
+
+logging:
+  level:
+    se499.kayaanbackend: DEBUG
+    org.springframework.security: DEBUG 
