@@ -33,7 +33,7 @@ public class QuizInformation {
     private Integer quizInfoID;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "contentInfoID", nullable = false)
+    @JoinColumn(name = "content_infoid", nullable = false)
     private ContentInformation contentInformation;
 
     @Enumerated(EnumType.STRING)

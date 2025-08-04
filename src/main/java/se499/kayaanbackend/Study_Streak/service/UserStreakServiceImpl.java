@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,13 +19,20 @@ import se499.kayaanbackend.security.entity.UserRepository;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class UserStreakServiceImpl implements UserStreakService {
 
     private final UserStreakRepository userStreakRepository;
     private final UserRepository userRepository;
     private final StudySessionService studySessionService;
+
+    public UserStreakServiceImpl(UserStreakRepository userStreakRepository, 
+                               UserRepository userRepository, 
+                               @Lazy StudySessionService studySessionService) {
+        this.userStreakRepository = userStreakRepository;
+        this.userRepository = userRepository;
+        this.studySessionService = studySessionService;
+    }
 
     @Override
     public UserStreakResponseDTO getCurrentStreak(Integer userId) {

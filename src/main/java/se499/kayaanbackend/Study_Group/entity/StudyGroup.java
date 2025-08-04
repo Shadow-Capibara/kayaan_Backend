@@ -1,8 +1,8 @@
-package se499.kayaanbackend.Study_Group;
+package se499.kayaanbackend.Study_Group.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import se499.kayaanbackend.redesign.entity.UserNew;
+import se499.kayaanbackend.Study_Group.entity.UserNew;
 
 import java.time.LocalDateTime;
 

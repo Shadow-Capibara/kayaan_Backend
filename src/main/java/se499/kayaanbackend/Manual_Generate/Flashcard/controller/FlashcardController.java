@@ -13,9 +13,12 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/manual/flashcard")
-@RequiredArgsConstructor
 public class FlashcardController {
     private final FlashcardService flashcardService;
+
+    public FlashcardController(FlashcardService flashcardService) {
+        this.flashcardService = flashcardService;
+    }
 
     @PostMapping
     public ResponseEntity<FlashcardResponseDTO> createFlashcard(

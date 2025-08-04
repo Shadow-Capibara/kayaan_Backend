@@ -31,7 +31,7 @@ public class NoteInformation {
     private Integer noteID;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "contentInfoID", nullable = false)
+    @JoinColumn(name = "content_infoid", nullable = false)
     private ContentInformation contentInformation;
 
     @Column(name = "note_text", columnDefinition = "LONGTEXT")

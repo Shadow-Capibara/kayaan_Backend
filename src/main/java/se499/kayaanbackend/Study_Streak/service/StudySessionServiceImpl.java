@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,13 +24,20 @@ import se499.kayaanbackend.security.entity.UserRepository;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class StudySessionServiceImpl implements StudySessionService {
 
     private final StudySessionRepository studySessionRepository;
     private final UserRepository userRepository;
     private final UserStreakService userStreakService;
+
+    public StudySessionServiceImpl(StudySessionRepository studySessionRepository, 
+                                 UserRepository userRepository, 
+                                 @Lazy UserStreakService userStreakService) {
+        this.studySessionRepository = studySessionRepository;
+        this.userRepository = userRepository;
+        this.userStreakService = userStreakService;
+    }
 
     @Override
     public StudySessionResponseDTO startSession(Integer userId, StudySessionRequestDTO requestDTO) {

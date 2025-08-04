@@ -4,6 +4,8 @@ spring:
       - db
   application:
     name: Kayaan-Backend
+  main:
+    allow-circular-references: true
   datasource:
     url: jdbc:mysql://localhost:3307/kayaan_db?createDatabaseIfNotExist=true&autoReconnect=true&characterEncoding=UTF-8&allowMultiQueries=true&allowPublicKeyRetrieval=true&useSSL=false&useUnicode=true
     driver-class-name: com.mysql.cj.jdbc.Driver
