@@ -14,8 +14,8 @@ import se499.kayaanbackend.Theme.dto.UserThemeDto;
 import se499.kayaanbackend.Theme.entity.Theme;
 import se499.kayaanbackend.Theme.entity.UserTheme;
 import se499.kayaanbackend.Theme.repository.UserThemeRepository;
-import se499.kayaanbackend.security.user.User;
-import se499.kayaanbackend.security.user.UserRepository;
+import se499.kayaanbackend.security.entity.User;
+import se499.kayaanbackend.security.entity.UserRepository;
 
 
 import java.util.ArrayList;

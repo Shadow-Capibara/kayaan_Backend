@@ -1,9 +1,10 @@
-package se499.kayaanbackend.security.token;
+package se499.kayaanbackend.security.entity;
+
+import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 
 @Service

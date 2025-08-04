@@ -2,11 +2,12 @@
 package se499.kayaanbackend.security.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import se499.kayaanbackend.security.user.User;
+import se499.kayaanbackend.security.entity.User;
 
 @Data
 @Builder

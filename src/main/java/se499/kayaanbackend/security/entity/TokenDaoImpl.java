@@ -1,7 +1,8 @@
-package se499.kayaanbackend.security.token;
+package se499.kayaanbackend.security.entity;
+
+import org.springframework.stereotype.Repository;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
