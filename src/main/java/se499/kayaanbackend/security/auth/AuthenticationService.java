@@ -2,30 +2,27 @@ package se499.kayaanbackend.security.auth;
 
 
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
+import java.io.IOException;
+import java.util.List;
+
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import org.springframework.web.server.ResponseStatusException;
-import se499.kayaanbackend.security.config.JwtService;
-import se499.kayaanbackend.security.token.Token;
-import se499.kayaanbackend.security.token.TokenRepository;
-import se499.kayaanbackend.security.token.TokenType;
-import se499.kayaanbackend.security.user.Role;
-import se499.kayaanbackend.security.user.User;
-import se499.kayaanbackend.security.user.UserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
-import java.util.List;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import se499.kayaanbackend.security.config.JwtService;
+import se499.kayaanbackend.security.entity.Role;
+import se499.kayaanbackend.security.entity.Token;
+import se499.kayaanbackend.security.entity.TokenRepository;
+import se499.kayaanbackend.security.entity.TokenType;
+import se499.kayaanbackend.security.entity.User;
+import se499.kayaanbackend.security.entity.UserRepository;
 
 @Service
 @RequiredArgsConstructor
