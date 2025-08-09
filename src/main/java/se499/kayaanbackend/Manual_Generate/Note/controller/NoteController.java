@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 import se499.kayaanbackend.Manual_Generate.Note.dto.NoteRequestDTO;
 import se499.kayaanbackend.Manual_Generate.Note.dto.NoteResponseDTO;
 import se499.kayaanbackend.Manual_Generate.Note.service.NoteService;
@@ -20,7 +21,7 @@ public class NoteController {
 
     @PostMapping
     public ResponseEntity<NoteResponseDTO> createNote(
-            @RequestBody NoteRequestDTO dto
+            @Valid @RequestBody NoteRequestDTO dto
     ) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         NoteResponseDTO saved = noteService.createNote(dto, username);
@@ -64,7 +65,7 @@ public class NoteController {
 
     @PutMapping("/{id}")
     public ResponseEntity<NoteResponseDTO> updateNote(@PathVariable Long id,
-                                                      @RequestBody NoteRequestDTO dto) {
+                                                      @Valid @RequestBody NoteRequestDTO dto) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         NoteResponseDTO updated = noteService.updateNote(id, dto, username);
         return ResponseEntity.ok(updated);

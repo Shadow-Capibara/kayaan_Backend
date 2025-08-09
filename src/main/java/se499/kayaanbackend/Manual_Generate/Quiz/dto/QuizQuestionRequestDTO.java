@@ -2,7 +2,7 @@ package se499.kayaanbackend.Manual_Generate.Quiz.dto;
 
 
 import lombok.*;
-import org.antlr.v4.runtime.misc.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 

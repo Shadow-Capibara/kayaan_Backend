@@ -6,6 +6,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 import se499.kayaanbackend.Manual_Generate.Quiz.dto.QuizRequestDTO;
 import se499.kayaanbackend.Manual_Generate.Quiz.dto.QuizResponseDTO;
 import se499.kayaanbackend.Manual_Generate.Quiz.service.QuizService;
@@ -22,7 +23,7 @@ public class QuizController {
     // 1. Create a new quiz
     @PostMapping
     public ResponseEntity<QuizResponseDTO> createQuiz(
-            @RequestBody QuizRequestDTO requestDto
+            @Valid @RequestBody QuizRequestDTO requestDto
     ) {
         // Retrieve the logged-in user's username from Spring Security context
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -82,7 +83,7 @@ public class QuizController {
 
     @PutMapping("/{quizId}")
     public ResponseEntity<QuizResponseDTO> updateQuiz(@PathVariable Long quizId,
-                                                      @RequestBody QuizRequestDTO dto) {
+                                                      @Valid @RequestBody QuizRequestDTO dto) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
         QuizResponseDTO updated = quizService.updateQuiz(quizId, dto, username);

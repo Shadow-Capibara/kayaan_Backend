@@ -1,27 +1,20 @@
 package se499.kayaanbackend.Manual_Generate.Note.entity;
 
-import java.util.List;
-
-import jakarta.persistence.CollectionTable;
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import se499.kayaanbackend.Manual_Generate.contentInfo.entity.ContentInfo;
 import se499.kayaanbackend.Study_Group.entity.Group;
+import se499.kayaanbackend.common.entity.ContentInformation;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
-@Table(name = "notes")
+@Table(name = "NOTE")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -32,37 +25,17 @@ public class Note {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String createdByUsername;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "content_infoid", nullable = false)
+    private ContentInfo contentInfo;
 
-    @Column(nullable = false)
-    private String title;
-
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String content;
-
-    @Column(nullable = true)
-    private String subject;
-
-    @Column(nullable = true)
-    private String difficulty;
-
-    @Column(nullable = true)
-    private String category;
+    @Column(name = "note_text", columnDefinition = "LONGTEXT")
+    private String noteText;
 
     @Column(nullable = true)
     private String imageUrl;
 
-    @ManyToMany
-    @JoinTable(
-            name = "note_shared_groups",
-            joinColumns = @JoinColumn(name = "note_id"),
-            inverseJoinColumns = @JoinColumn(name = "group_id")
-    )
-    private List<Group> sharedGroups;
+    private LocalDateTime created_at;
+    private LocalDateTime updated_at;
 
-    @ElementCollection
-    @CollectionTable(name = "note_tags", joinColumns = @JoinColumn(name = "note_id"))
-    @Column(name = "tag")
-    private List<String> tags;
 }

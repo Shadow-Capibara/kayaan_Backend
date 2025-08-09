@@ -3,6 +3,7 @@ package se499.kayaanbackend.Manual_Generate.Flashcard.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import jakarta.validation.Valid;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import se499.kayaanbackend.Manual_Generate.Flashcard.dto.FlashcardRequestDTO;
@@ -22,7 +23,7 @@ public class FlashcardController {
 
     @PostMapping
     public ResponseEntity<FlashcardResponseDTO> createFlashcard(
-           @RequestBody FlashcardRequestDTO dto
+           @Valid @RequestBody FlashcardRequestDTO dto
     ) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         FlashcardResponseDTO result = flashcardService.createFlashcard(dto, username);
@@ -66,7 +67,7 @@ public class FlashcardController {
 
     @PutMapping("/{id}")
     public ResponseEntity<FlashcardResponseDTO> updateFlashcard(@PathVariable Long id,
-                                                                @RequestBody FlashcardRequestDTO dto) {
+                                                                @Valid @RequestBody FlashcardRequestDTO dto) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         FlashcardResponseDTO updated = flashcardService.updateFlashcard(id, dto, username);
         return ResponseEntity.ok(updated);

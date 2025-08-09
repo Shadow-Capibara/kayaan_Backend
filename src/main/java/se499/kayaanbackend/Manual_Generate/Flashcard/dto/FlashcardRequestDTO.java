@@ -2,6 +2,7 @@ package se499.kayaanbackend.Manual_Generate.Flashcard.dto;
 
 
 import lombok.*;
+import jakarta.validation.constraints.NotBlank;
 
 import java.util.List;
 
@@ -11,7 +12,9 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class FlashcardRequestDTO {
+    @NotBlank
     private String frontText;
+    @NotBlank
     private String backText;
     private String subject;
     private String difficulty;

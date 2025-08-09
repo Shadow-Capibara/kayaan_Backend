@@ -1,25 +1,20 @@
 package se499.kayaanbackend.Manual_Generate.Flashcard.entity;
 
-import jakarta.persistence.CollectionTable;
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import se499.kayaanbackend.Manual_Generate.contentInfo.entity.ContentInfo;
 import se499.kayaanbackend.Study_Group.entity.Group;
+import se499.kayaanbackend.common.entity.ContentInformation;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
-@Table(name = "flashcards")
+@Table(name = "FLASHCARD")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -30,34 +25,22 @@ public class Flashcard {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String createdByUsername;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "content_infoid", nullable = false)
+    private ContentInfo contentInfo;
 
-    @Column(nullable = false)
-    private String frontText;   // e.g. “Define polymorphism”
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String frontText;
 
-    @Column(nullable = false)
-    private String backText;    // e.g. “Polymorphism is ...”
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String backText;
 
-    private String subject;
-    private String difficulty;
-
-    private String category;
-
+    @Column(nullable = true)
     private String frontImageUrl;
 
+    @Column(nullable = true)
     private String backImageUrl;
 
-    @ElementCollection
-    @CollectionTable(name = "flashcard_tags", joinColumns = @JoinColumn(name = "flashcard_id"))
-    @Column(name = "tag")
-    private java.util.List<String> tags;
-
-    @ManyToMany
-    @JoinTable(
-            name = "flashcard_shared_groups",
-            joinColumns = @JoinColumn(name = "flashcard_id"),
-            inverseJoinColumns = @JoinColumn(name = "group_id")
-    )
-    private java.util.List<Group> sharedGroups;
+    private LocalDateTime created_at;
+    private LocalDateTime updated_at;
 }

@@ -1,6 +1,7 @@
 package se499.kayaanbackend.Manual_Generate.Note.service;
 
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -51,7 +52,8 @@ public class NoteServiceImpl implements NoteService {
                 .difficulty(saved.getDifficulty())
                 .category(saved.getCategory())
                 .tags(saved.getTags())
-                .groupIds(saved.getSharedGroups().stream().map(Group::getId).collect(Collectors.toList()))
+                .groupIds((saved.getSharedGroups() == null ? Collections.<Group>emptyList() : saved.getSharedGroups())
+                        .stream().map(Group::getId).collect(Collectors.toList()))
                 .build();
     }
 
@@ -70,7 +72,8 @@ public class NoteServiceImpl implements NoteService {
                         .difficulty(n.getDifficulty())
                         .category(n.getCategory())
                         .tags(n.getTags())
-                        .groupIds(n.getSharedGroups().stream().map(Group::getId).collect(Collectors.toList()))
+                        .groupIds((n.getSharedGroups() == null ? Collections.<Group>emptyList() : n.getSharedGroups())
+                                .stream().map(Group::getId).collect(Collectors.toList()))
                         .build())
                 .collect(Collectors.toList());
     }
@@ -90,7 +93,8 @@ public class NoteServiceImpl implements NoteService {
                         .difficulty(n.getDifficulty())
                         .category(n.getCategory())
                         .tags(n.getTags())
-                        .groupIds(n.getSharedGroups().stream().map(Group::getId).collect(Collectors.toList()))
+                        .groupIds((n.getSharedGroups() == null ? Collections.<Group>emptyList() : n.getSharedGroups())
+                                .stream().map(Group::getId).collect(Collectors.toList()))
                         .build())
                 .collect(Collectors.toList());
     }
@@ -110,7 +114,8 @@ public class NoteServiceImpl implements NoteService {
                         .difficulty(n.getDifficulty())
                         .category(n.getCategory())
                         .tags(n.getTags())
-                        .groupIds(n.getSharedGroups().stream().map(Group::getId).collect(Collectors.toList()))
+                        .groupIds((n.getSharedGroups() == null ? Collections.<Group>emptyList() : n.getSharedGroups())
+                                .stream().map(Group::getId).collect(Collectors.toList()))
                         .build())
                 .collect(Collectors.toList());
     }
@@ -133,7 +138,8 @@ public class NoteServiceImpl implements NoteService {
                 .difficulty(note.getDifficulty())
                 .category(note.getCategory())
                 .tags(note.getTags())
-                .groupIds(note.getSharedGroups().stream().map(Group::getId).collect(Collectors.toList()))
+                .groupIds((note.getSharedGroups() == null ? Collections.<Group>emptyList() : note.getSharedGroups())
+                        .stream().map(Group::getId).collect(Collectors.toList()))
                 .build();
     }
 
@@ -165,7 +171,8 @@ public class NoteServiceImpl implements NoteService {
                 .difficulty(saved.getDifficulty())
                 .category(saved.getCategory())
                 .tags(saved.getTags())
-                .groupIds(saved.getSharedGroups().stream().map(Group::getId).collect(Collectors.toList()))
+                .groupIds((saved.getSharedGroups() == null ? Collections.<Group>emptyList() : saved.getSharedGroups())
+                        .stream().map(Group::getId).collect(Collectors.toList()))
                 .build();
     }
 

@@ -1,6 +1,7 @@
 package se499.kayaanbackend.Manual_Generate.Quiz.service;
 
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,7 +42,10 @@ public class QuizServiceImpl implements QuizService {
                 .build();
 
         // 2. Convert each QuestionRequestDto → Question entity
-        List<QuizQuestion> questionEntities = requestDto.getQuestions().stream().map(qDTO -> {
+        List<QuizQuestionRequestDTO> questionDTOs = requestDto.getQuestions() == null
+                ? Collections.emptyList()
+                : requestDto.getQuestions();
+        List<QuizQuestion> questionEntities = questionDTOs.stream().map(qDTO -> {
             QuizQuestion question = QuizQuestion.builder()
                     .quiz(quiz)
                     .questionText(qDTO.getQuestionText())
@@ -82,7 +86,7 @@ public class QuizServiceImpl implements QuizService {
     @Override
     @Transactional(readOnly = true)
     public List<QuizResponseDTO> getQuizzesBySubject(String username, String subject) {
-        List<Quiz> quizzes = quizRepository.findByCreatedByUsernameAndQuestions_Subject(username, subject);
+        List<Quiz> quizzes = quizRepository.findByCreatedByUsernameAndQuestionsSubject(username, subject);
         return quizzes.stream().map(this::mapToResponseDTO).collect(Collectors.toList());
     }
 
@@ -111,7 +115,10 @@ public class QuizServiceImpl implements QuizService {
                 groupRepository.findAllById(requestDto.getGroupIds());
         quiz.setSharedGroups(groups);
         quiz.getQuestions().clear();
-        List<QuizQuestion> questionEntities = requestDto.getQuestions().stream().map(qDTO -> QuizQuestion.builder()
+        List<QuizQuestionRequestDTO> questionDTOs = requestDto.getQuestions() == null
+                ? Collections.emptyList()
+                : requestDto.getQuestions();
+        List<QuizQuestion> questionEntities = questionDTOs.stream().map(qDTO -> QuizQuestion.builder()
                 .quiz(quiz)
                 .questionText(qDTO.getQuestionText())
                 .type(mapDtoTypeToEntityType(qDTO.getType()))
@@ -155,7 +162,8 @@ public class QuizServiceImpl implements QuizService {
     }
 
     private QuizResponseDTO mapToResponseDTO(Quiz quiz) {
-        List<QuizResponseDTO.QuestionResponse> questionResponses = quiz.getQuestions().stream().map(q ->
+        List<QuizQuestion> questionsSafe = quiz.getQuestions() == null ? Collections.emptyList() : quiz.getQuestions();
+        List<QuizResponseDTO.QuestionResponse> questionResponses = questionsSafe.stream().map(q ->
                 QuizResponseDTO.QuestionResponse.builder()
                         .id(q.getId())
                         .questionText(q.getQuestionText())
@@ -173,7 +181,8 @@ public class QuizServiceImpl implements QuizService {
                 .title(quiz.getTitle())
                 .createdByUsername(quiz.getCreatedByUsername())
                 .category(quiz.getCategory())
-                .groupIds(quiz.getSharedGroups().stream().map(Group::getId).collect(Collectors.toList()))
+                .groupIds((quiz.getSharedGroups() == null ? Collections.<Group>emptyList() : quiz.getSharedGroups())
+                        .stream().map(Group::getId).collect(Collectors.toList()))
                 .questions(questionResponses)
                 .build();
     }

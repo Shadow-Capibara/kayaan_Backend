@@ -1,28 +1,20 @@
 package se499.kayaanbackend.Manual_Generate.Quiz.entity;
 
-
-import java.util.List;
-
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import se499.kayaanbackend.Manual_Generate.contentInfo.entity.ContentInfo;
 import se499.kayaanbackend.Study_Group.entity.Group;
+import se499.kayaanbackend.common.entity.ContentInformation;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
-@Table(name = "quizzes")
+@Table(name = "QUIZ")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -33,22 +25,23 @@ public class Quiz {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String title;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "content_infoid", nullable = false)
+    private ContentInfo contentInfo;
 
-    @Column(nullable = false)
-    private String createdByUsername;
+    @Column(name = "quiz_detail", columnDefinition = "TEXT", nullable = false)
+    private String quizDetail;
 
-    private String category;
-
-    @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Enumerated(EnumType.STRING)
+    @OneToMany(mappedBy = "QUIZ", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<QuizQuestion> questions;
 
-    @ManyToMany
-    @JoinTable(
-            name = "quiz_shared_groups",
-            joinColumns = @JoinColumn(name = "quiz_id"),
-            inverseJoinColumns = @JoinColumn(name = "group_id")
-    )
-    private List<Group> sharedGroups;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private QuizType quizType;
+
+    public enum QuizType { MultipleChoice, TrueFalse, OpenEnded }
+
+    private LocalDateTime created_at;
+    private LocalDateTime updated_at;
 }

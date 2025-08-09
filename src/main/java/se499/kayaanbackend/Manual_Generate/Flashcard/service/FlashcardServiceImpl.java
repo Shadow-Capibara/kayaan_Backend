@@ -1,5 +1,6 @@
 package se499.kayaanbackend.Manual_Generate.Flashcard.service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -72,7 +73,8 @@ public class FlashcardServiceImpl implements FlashcardService {
                         .difficulty(f.getDifficulty())
                         .category(f.getCategory())
                         .tags(f.getTags())
-                        .groupIds(f.getSharedGroups().stream().map(Group::getId).collect(Collectors.toList()))
+                         .groupIds((f.getSharedGroups() == null ? Collections.<Group>emptyList() : f.getSharedGroups())
+                                 .stream().map(Group::getId).collect(Collectors.toList()))
                         .build())
                 .collect(Collectors.toList());
     }
@@ -93,7 +95,8 @@ public class FlashcardServiceImpl implements FlashcardService {
                         .difficulty(f.getDifficulty())
                         .category(f.getCategory())
                         .tags(f.getTags())
-                        .groupIds(f.getSharedGroups().stream().map(Group::getId).collect(Collectors.toList()))
+                         .groupIds((f.getSharedGroups() == null ? Collections.<Group>emptyList() : f.getSharedGroups())
+                                 .stream().map(Group::getId).collect(Collectors.toList()))
                         .build())
                 .collect(Collectors.toList());
     }
@@ -114,7 +117,8 @@ public class FlashcardServiceImpl implements FlashcardService {
                         .difficulty(f.getDifficulty())
                         .category(f.getCategory())
                         .tags(f.getTags())
-                        .groupIds(f.getSharedGroups().stream().map(Group::getId).collect(Collectors.toList()))
+                         .groupIds((f.getSharedGroups() == null ? Collections.<Group>emptyList() : f.getSharedGroups())
+                                 .stream().map(Group::getId).collect(Collectors.toList()))
                         .build())
                 .collect(Collectors.toList());
     }
@@ -138,7 +142,8 @@ public class FlashcardServiceImpl implements FlashcardService {
                 .difficulty(card.getDifficulty())
                 .category(card.getCategory())
                 .tags(card.getTags())
-                .groupIds(card.getSharedGroups().stream().map(Group::getId).collect(Collectors.toList()))
+                .groupIds((card.getSharedGroups() == null ? Collections.<Group>emptyList() : card.getSharedGroups())
+                        .stream().map(Group::getId).collect(Collectors.toList()))
                 .build();
     }
 
@@ -172,7 +177,8 @@ public class FlashcardServiceImpl implements FlashcardService {
                 .difficulty(saved.getDifficulty())
                 .category(saved.getCategory())
                 .tags(saved.getTags())
-                .groupIds(saved.getSharedGroups().stream().map(Group::getId).collect(Collectors.toList()))
+                .groupIds((saved.getSharedGroups() == null ? Collections.<Group>emptyList() : saved.getSharedGroups())
+                        .stream().map(Group::getId).collect(Collectors.toList()))
                 .build();
     }
 
