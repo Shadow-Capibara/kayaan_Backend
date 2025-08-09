@@ -1,28 +1,32 @@
 spring:
-  profiles:
-    active:
-      - db
   application:
     name: Kayaan-Backend
   datasource:
-    url: jdbc:mysql://localhost:3307/kayaan_db?createDatabaseIfNotExist=true&autoReconnect=true&characterEncoding=UTF-8&allowMultiQueries=true&allowPublicKeyRetrieval=true&useSSL=false&useUnicode=true
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: password
+    url: jdbc:postgresql://localhost:5432/kayaan
+    driver-class-name: org.postgresql.Driver
+    username: kayaan
+    password: secret
   jpa:
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
     hibernate:
       ddl-auto: update
     show-sql: true
-application:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+app:
+  storage:
+    endpoint: http://localhost:9000
+    accessKey: minioadmin
+    secretKey: minioadmin123
+    bucket: kayaan-files
+    region: ap-southeast-1
   security:
     jwt:
-      secret-key: 5274a74a32284bf55ed941fdb26517b050c020a43cb0cc66a9d207ac4f26ca644ea3b5fd011cffec733481bf3e68184611f9d7fc2b4a05bb59dff54ffc53ee0ce09883704b4bdd8bed98bdb0ab3bf78354915abb48914f06355cd3852d82b6d5cfe35d8246a7a258783b74ea1caebf84aa97b6bedcffbec428bc2b11edb4c9c83c1c3a3ace234ee74969a363968396d2cd139ca4cb1bbd37cd2d659a041f17a709725b9cfaa899f009d5f9887a6339eed6a17ebd5b922e65779aa22a0036c2a5d9a2c781f6ddd4b71c085b41801b33740aec3f92473f876a091cc4f8369fc34712924a8eeddffc2ba0bbc3a8bab1975409a3628cbd4593efee648591a71ff5dd
-      expiration: 86400000
-      refresh-token:
-        expiration: 604800000
-avatar:
-  upload-dir: ${user.dir}/uploads/avatars
+      enabled: false
+      secretKey: dev-secret
+      expirationMs: 86400000
