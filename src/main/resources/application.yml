@@ -20,7 +20,7 @@ spring:
 
 app:
   storage:
-    endpoint: http://localhost:9000
+    endpoint: http://localhost:9002   # แก้ตรงนี้
     accessKey: minioadmin
     secretKey: minioadmin123
     bucket: kayaan-files
