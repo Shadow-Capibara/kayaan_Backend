@@ -40,12 +40,18 @@ public class SupabaseStorageAdapter implements StorageService {
         try {
             String url = supabaseUrl + "/storage/v1/object/sign/" + bucket + "/" + path;
             
+            System.out.println("Supabase URL: " + url);
+            System.out.println("Bucket: " + bucket);
+            System.out.println("Path: " + path);
+            System.out.println("ContentType: " + contentType);
+            
             Map<String, Object> requestBody = Map.of(
                 "expiresIn", expiresInSeconds,
                 "contentType", contentType
             );
             
             String jsonBody = objectMapper.writeValueAsString(requestBody);
+            System.out.println("Request body: " + jsonBody);
             
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
@@ -57,6 +63,9 @@ public class SupabaseStorageAdapter implements StorageService {
             
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             
+            System.out.println("Response status: " + response.statusCode());
+            System.out.println("Response body: " + response.body());
+            
             if (response.statusCode() == 200) {
                 SignedUrlResponse signedUrlResponse = objectMapper.readValue(response.body(), SignedUrlResponse.class);
                 return new SignedUrl(signedUrlResponse.signedURL, path, expiresInSeconds);
@@ -65,6 +74,8 @@ public class SupabaseStorageAdapter implements StorageService {
             }
             
         } catch (Exception e) {
+            System.err.println("Exception in createSignedUploadUrl: " + e.getMessage());
+            e.printStackTrace();
             throw new RuntimeException("Error creating signed upload URL", e);
         }
     }
