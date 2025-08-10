@@ -35,8 +35,8 @@ kayaan:
     url: https://ljapyahphaohoanshamz.supabase.co
     serviceKey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqYXB5YWhwaGFvaG9hbnNoYW16Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDEyNjY2OSwiZXhwIjoyMDY5NzAyNjY5fQ.mQffNvnr4f9otqN5_f1CYtZ8vWlMgsEYBlNfBHu-Pf8
     buckets:
-      avatars: ${SUPABASE_BUCKET_AVATARS:avatars}
-      ai: ${SUPABASE_BUCKET_AI:ai-outputs}
+      avatars: avatars
+      ai: ai-outputs
     realtime:
       enabled: false
       groupChannelPrefix: groups.
