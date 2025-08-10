@@ -1,8 +1,5 @@
 package se499.kayaanbackend.shared.storage;
 
-import org.springframework.stereotype.Component;
-
-@Component
 public class MockStorageService implements StorageService {
     
     @Override
