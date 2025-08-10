@@ -1,19 +1,19 @@
 package se499.kayaanbackend.Manual_Generate.Note.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import lombok.*;
-
-import java.util.List;
-
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class NoteRequestDTO {
+    
     private String title;
     private String content;
     private String subject;
     private String difficulty;
-    private List<String> tags;
+    private String tags;
 }

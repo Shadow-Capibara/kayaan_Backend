@@ -1,39 +1,54 @@
 package se499.kayaanbackend.Manual_Generate.Note.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
+import java.time.LocalDateTime;
 
-import java.util.List;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Entity
-@Table(name = "notes")
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Entity
+@Table(name = "note")
 public class Note {
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(nullable = false)
-    private String createdByUsername;
-
+    
     @Column(nullable = false)
     private String title;
-
-    @Column(nullable = false, columnDefinition = "TEXT")
+    
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
-
-    @Column(nullable = true)
+    
+    @Column(nullable = false)
     private String subject;
-
-    @Column(nullable = true)
+    
+    @Column(nullable = false)
     private String difficulty;
-
-    @ElementCollection
-    @CollectionTable(name = "note_tags", joinColumns = @JoinColumn(name = "note_id"))
-    @Column(name = "tag")
-    private List<String> tags;
+    
+    @Column(columnDefinition = "TEXT")
+    private String tags;
+    
+    @Column(name = "created_by_username")
+    private String createdByUsername;
+    
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+    
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
 }

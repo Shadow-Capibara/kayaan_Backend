@@ -17,6 +17,11 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
 application:
   security:
     jwt:
@@ -24,5 +29,17 @@ application:
       expiration: 86400000
       refresh-token:
         expiration: 604800000
+
+kayaan:
+  supabase:
+    url: ${SUPABASE_URL}
+    serviceKey: ${SUPABASE_SERVICE_KEY}
+    buckets:
+      avatars: ${SUPABASE_BUCKET_AVATARS:avatars}
+      ai: ${SUPABASE_BUCKET_AI:ai-outputs}
+    realtime:
+      enabled: true
+      groupChannelPrefix: groups.
+
 avatar:
   upload-dir: ${user.dir}/uploads/avatars
