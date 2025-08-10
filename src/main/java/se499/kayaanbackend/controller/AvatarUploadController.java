@@ -33,44 +33,35 @@ public class AvatarUploadController {
         return ResponseEntity.ok(Map.of("message", "AvatarUploadController is working!"));
     }
 
-    @PostMapping(value = "/avatar/upload-proxy", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(
+        path = { "/avatar/upload-proxy", "/users/{id}/avatar-upload-proxy" },
+        consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
     public ResponseEntity<?> proxyUpload(
             @RequestPart("file") MultipartFile file,
             @RequestParam("signedUrl") String signedUrl
     ) throws Exception {
-
-        log.info("Proxy upload request - File: {}, Size: {} bytes", 
-                file.getOriginalFilename(), file.getSize());
-
         if (file.isEmpty()) {
-            log.warn("Empty file received");
             return ResponseEntity.badRequest().body(Map.of("error", "File is empty"));
         }
         
-        if (file.getSize() > 5 * 1024 * 1024) { // 5MB guard
-            log.warn("File too large: {} bytes", file.getSize());
+        if (file.getSize() > 5 * 1024 * 1024) {
             return ResponseEntity.badRequest().body(Map.of("error", "File too large (>5MB)"));
         }
-        
-        final String contentType = file.getContentType() != null ? file.getContentType() : "application/octet-stream";
 
-        log.info("Uploading to Supabase - Content-Type: {}, SignedUrl: {}", contentType, signedUrl);
+        String contentType = file.getContentType() != null ? file.getContentType() : "application/octet-stream";
 
         HttpRequest req = HttpRequest.newBuilder(URI.create(signedUrl))
-                .header("Content-Type", contentType)   // สำคัญ! ห้ามส่ง header อื่น
+                .header("Content-Type", contentType)
                 .PUT(HttpRequest.BodyPublishers.ofByteArray(file.getBytes()))
                 .build();
 
         HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
-
-        // Supabase มักตอบ 200/201/204 เมื่ออัปโหลดสำเร็จ
-        int sc = resp.statusCode();
-        log.info("Supabase response - Status: {}, Body: {}", sc, resp.body());
         
-        if (sc >= 200 && sc < 300) {
-            return ResponseEntity.ok().body(Map.of("message", "Upload successful"));
+        if (resp.statusCode() >= 200 && resp.statusCode() < 300) {
+            return ResponseEntity.ok(Map.of("message", "Upload successful"));
         }
         
-        return ResponseEntity.status(sc).body(Map.of("error", "Upload failed", "details", resp.body()));
+        return ResponseEntity.status(resp.statusCode()).body(Map.of("error", "Upload failed", "details", resp.body()));
     }
 }

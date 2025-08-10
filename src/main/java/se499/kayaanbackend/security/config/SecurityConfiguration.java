@@ -50,18 +50,25 @@ public class SecurityConfiguration {
 //                              "/api/users/*/avatar-url").hasRole("USER")
 //                      .anyRequest().authenticated()
 //              )
-              .authorizeHttpRequests(auth -> auth
-                      .requestMatchers("/api/v1/auth/**").permitAll()
-                      .requestMatchers(HttpMethod.GET, "/api/themes").permitAll()
-                      .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
-                      .requestMatchers(HttpMethod.POST, "/api/users/{id}/avatar-upload").authenticated()
-                      .requestMatchers(HttpMethod.POST, "/api/users/{id}/avatar-upload-url").authenticated()
-                      .requestMatchers(HttpMethod.POST, "/api/users/{id}/avatar-upload-proxy").authenticated()
-                      .requestMatchers(HttpMethod.POST, "/api/avatar/upload-proxy").authenticated()
-                      .requestMatchers(HttpMethod.PUT, "/api/users/{id}/avatar-url").authenticated()
-                      .requestMatchers("/api/users/{id}/**").authenticated()
-                      .anyRequest().authenticated()
-              )
+.authorizeHttpRequests(auth -> auth
+.requestMatchers("/api/v1/auth/**").permitAll()
+.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()   // เผื่อ preflight
+
+.requestMatchers(HttpMethod.GET,  "/api/themes").permitAll()
+.requestMatchers(HttpMethod.GET,  "/api/users/me").authenticated()
+
+// ใช้ ant pattern (*) แทน {id}
+.requestMatchers(HttpMethod.POST, "/api/users/*/avatar-upload-url").authenticated()
+.requestMatchers(HttpMethod.PUT,  "/api/users/*/avatar-url").authenticated()
+
+// เส้นที่มีจริงใน BE คือ /api/avatar/upload-proxy (ไม่มี /users/{id}/...)
+.requestMatchers(HttpMethod.POST, "/api/avatar/upload-proxy").authenticated()
+
+// ถ้าคุณมีเส้นอื่นใต้ /api/users/{id}/... แล้วต้องการบังคับ auth:
+.requestMatchers("/api/users/*/**").authenticated()
+
+.anyRequest().authenticated()
+)
               .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
               .authenticationProvider(authenticationProvider)
               .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
