@@ -1,5 +1,9 @@
 package se499.kayaanbackend.controller;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,7 +21,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -126,6 +133,51 @@ public class AvatarController {
             errorResponse.put("error", e.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
         }
+    }
+
+    @PostMapping(value = "/{id}/avatar-upload-proxy", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
+    public ResponseEntity<?> proxyUpload(
+            @PathVariable Long id,
+            @RequestPart("file") MultipartFile file,
+            @RequestParam("signedUrl") String signedUrl
+    ) throws Exception {
+        log.info("Proxy upload request for user {} - File: {}, Size: {} bytes", 
+                id, file.getOriginalFilename(), file.getSize());
+
+        if (file.isEmpty()) {
+            log.warn("Empty file received for user {}", id);
+            return ResponseEntity.badRequest().body(Map.of("error", "File is empty"));
+        }
+        
+        if (file.getSize() > 5 * 1024 * 1024) { // 5MB guard
+            log.warn("File too large for user {}: {} bytes", id, file.getSize());
+            return ResponseEntity.badRequest().body(Map.of("error", "File too large (>5MB)"));
+        }
+        
+        final String contentType = file.getContentType() != null ? file.getContentType() : "application/octet-stream";
+
+        log.info("Uploading to Supabase for user {} - Content-Type: {}, SignedUrl: {}", id, contentType, signedUrl);
+
+        HttpClient http = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(20))
+                .build();
+
+        HttpRequest req = HttpRequest.newBuilder(URI.create(signedUrl))
+                .header("Content-Type", contentType)
+                .PUT(HttpRequest.BodyPublishers.ofByteArray(file.getBytes()))
+                .build();
+
+        HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
+
+        int sc = resp.statusCode();
+        log.info("Supabase response for user {} - Status: {}, Body: {}", id, sc, resp.body());
+        
+        if (sc >= 200 && sc < 300) {
+            return ResponseEntity.ok().body(Map.of("message", "Upload successful"));
+        }
+        
+        return ResponseEntity.status(sc).body(Map.of("error", "Upload failed", "details", resp.body()));
     }
     
     /**

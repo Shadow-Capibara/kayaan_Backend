@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -26,6 +27,11 @@ public class AvatarUploadController {
     private final HttpClient http = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(20))
             .build();
+
+    @GetMapping("/avatar/test")
+    public ResponseEntity<?> test() {
+        return ResponseEntity.ok(Map.of("message", "AvatarUploadController is working!"));
+    }
 
     @PostMapping(value = "/avatar/upload-proxy", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> proxyUpload(
