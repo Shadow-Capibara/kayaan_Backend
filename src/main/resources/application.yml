@@ -18,7 +18,7 @@ spring:
       ddl-auto: update
     show-sql: true
   flyway:
-    enabled: true
+    enabled: false
     locations: classpath:db/migration
     baseline-on-migrate: true
 
@@ -32,13 +32,13 @@ application:
 
 kayaan:
   supabase:
-    url: ${SUPABASE_URL}
-    serviceKey: ${SUPABASE_SERVICE_KEY}
+    url: ${SUPABASE_URL:http://localhost:8000}
+    serviceKey: ${SUPABASE_SERVICE_KEY:dummy-key}
     buckets:
       avatars: ${SUPABASE_BUCKET_AVATARS:avatars}
       ai: ${SUPABASE_BUCKET_AI:ai-outputs}
     realtime:
-      enabled: true
+      enabled: false
       groupChannelPrefix: groups.
 
 avatar:

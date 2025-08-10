@@ -19,7 +19,7 @@ public class QuizQuestionChoice {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "questionID", nullable = false)
-    private QuizQuestionInformation question;
+    private QuizQuestion question;
 
     @Column(name = "choiceDetail", columnDefinition = "TEXT", nullable = false)
     private String choiceDetail;
