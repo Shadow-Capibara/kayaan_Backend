@@ -55,6 +55,7 @@ public class SecurityConfiguration {
                       .requestMatchers(HttpMethod.GET, "/api/themes").permitAll()
                       .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
                       .requestMatchers(HttpMethod.POST, "/api/users/{id}/avatar-upload").authenticated()
+                      .requestMatchers(HttpMethod.POST, "/api/users/{id}/avatar-upload-url").authenticated()
                       .requestMatchers(HttpMethod.PUT, "/api/users/{id}/avatar-url").authenticated()
                       .requestMatchers("/api/users/{id}/**").authenticated()
                       .anyRequest().authenticated()

@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -12,11 +13,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import se499.kayaanbackend.DTO.AvatarDTO;
 import se499.kayaanbackend.security.user.User;
 import se499.kayaanbackend.service.AvatarService;
@@ -24,7 +24,7 @@ import se499.kayaanbackend.shared.storage.StorageService;
 
 @RestController
 @RequestMapping("/api/users")
-@RequiredArgsConstructor
+@Slf4j
 public class AvatarController {
 
     private final AvatarService avatarService;
@@ -32,6 +32,12 @@ public class AvatarController {
     
     @Value("${kayaan.supabase.buckets.avatars}")
     private String avatarsBucket;
+    
+    public AvatarController(AvatarService avatarService, StorageService storageService) {
+        this.avatarService = avatarService;
+        this.storageService = storageService;
+        log.info("StorageService impl = {}", storageService.getClass().getName());
+    }
     
     @PostMapping("/{id}/avatar-upload-url")
     @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
@@ -77,20 +83,12 @@ public class AvatarController {
         }
     }
     
-    // Keep existing endpoint for backward compatibility
+    // Legacy endpoint disabled - use new flow: avatar-upload-url -> PUT signed URL -> avatar-url
     @PostMapping("/{id}/avatar-upload")
-    public ResponseEntity<?> uploadAvatar(
-            @PathVariable Long id,
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("rotation") int rotation,
-            @AuthenticationPrincipal User currentUser
-    ) {
-        try {
-            AvatarDTO dto = avatarService.storeAvatar(id, file, rotation);
-            return ResponseEntity.ok(dto);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    @ResponseStatus(HttpStatus.GONE) // 410
+    public ResponseEntity<?> legacyUploadDisabled() {
+        return ResponseEntity.status(HttpStatus.GONE)
+            .body(Map.of("error", "Legacy upload endpoint disabled. Use new flow: POST /avatar-upload-url -> PUT signed URL -> PUT /avatar-url"));
     }
     
     /**
