@@ -1,5 +1,9 @@
 package se499.kayaanbackend.controller;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,7 +21,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -105,6 +111,49 @@ public class AvatarController {
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", e.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+    @PutMapping("/avatar-upload")
+    public ResponseEntity<?> uploadAvatar(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("signedUrl") String signedUrl,
+            @RequestParam("userId") Long userId) {
+        try {
+            log.info("Uploading avatar for user {} with file: {}", userId, file.getOriginalFilename());
+
+            // Create HTTP client
+            HttpClient httpClient = HttpClient.newBuilder()
+                    .connectTimeout(Duration.ofSeconds(30))
+                    .build();
+
+            // Build request to Supabase
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(signedUrl))
+                    .header("Content-Type", file.getContentType())
+                    .PUT(HttpRequest.BodyPublishers.ofByteArray(file.getBytes()))
+                    .build();
+
+            // Send request to Supabase
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                log.info("Avatar uploaded successfully for user {}", userId);
+                return ResponseEntity.ok(Map.of(
+                        "message", "Avatar uploaded successfully",
+                        "avatarUrl", signedUrl
+                ));
+            } else {
+                log.error("Failed to upload avatar for user {}: Status {}, Body: {}", 
+                        userId, response.statusCode(), response.body());
+                return ResponseEntity.status(response.statusCode())
+                        .body(Map.of("error", "Failed to upload to Supabase: " + response.body()));
+            }
+
+        } catch (Exception e) {
+            log.error("Error uploading avatar for user {}: {}", userId, e.getMessage());
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Upload failed: " + e.getMessage()));
         }
     }
 
