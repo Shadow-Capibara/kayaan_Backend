@@ -42,6 +42,7 @@ SUPABASE_SERVICE_KEY=your_service_key_here
 
 ### 4. Test Configuration
 
+#### Test Backend Endpoint
 ```bash
 # Test with curl
 curl -X POST "http://localhost:8080/api/users/53/avatar-upload-url" \
@@ -50,12 +51,31 @@ curl -X POST "http://localhost:8080/api/users/53/avatar-upload-url" \
   -d '{"fileName":"test.jpg","contentType":"image/jpeg"}'
 ```
 
+#### Test Supabase API Directly
+```bash
+# Test Supabase storage API directly
+curl -X POST "$SUPABASE_URL/storage/v1/object/upload/sign/avatars/users/103/test.jpg" \
+  -H "Authorization: Bearer $SUPABASE_SERVICE_KEY" \
+  -H "apikey: $SUPABASE_SERVICE_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"expiresIn": 600, "contentType": "image/jpeg"}'
+```
+
+**Expected Response:**
+```json
+{
+  "signedURL": "https://...",
+  "path": "users/103/test.jpg"
+}
+```
+
 ## Environment Variables
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `SUPABASE_SERVICE_KEY` | Supabase service role key | ✅ Yes |
-| `SUPABASE_URL` | Supabase project URL | ❌ No (in application.yml) |
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `SUPABASE_SERVICE_KEY` | Supabase service role key | ✅ Yes | - |
+| `SUPABASE_URL` | Supabase project URL | ❌ No | https://ljapyahphaohoanshamz.supabase.co |
+| `SUPABASE_BUCKET_AVATARS` | Storage bucket name for avatars | ❌ No | avatars |
 
 ## Security Notes
 
@@ -72,6 +92,29 @@ curl -X POST "http://localhost:8080/api/users/53/avatar-upload-url" \
 2. Verify bucket `avatars` exists
 3. Check Supabase project URL
 4. Verify service key has storage permissions
+
+### "Invalid Compact JWS" Error
+1. **Check Service Key Format**: Ensure it starts with `sb_secret_`
+2. **Trim Whitespace**: Service key should not have leading/trailing spaces
+3. **Use Correct Endpoint**: `/storage/v1/object/upload/sign/` (not `/storage/v1/object/sign/`)
+4. **Include Both Headers**: Both `Authorization` and `apikey` headers are required
+5. **Test Direct API Call**: Use the curl example above to test Supabase directly
+
+### Debug Steps
+```bash
+# 1. Check environment variable
+echo "Service Key: ${SUPABASE_SERVICE_KEY:0:10}..."
+
+# 2. Test Supabase API directly
+curl -X POST "$SUPABASE_URL/storage/v1/object/upload/sign/avatars/test.jpg" \
+  -H "Authorization: Bearer $SUPABASE_SERVICE_KEY" \
+  -H "apikey: $SUPABASE_SERVICE_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"expiresIn": 600, "contentType": "image/jpeg"}' \
+  -v
+
+# 3. Check application logs for debug output
+```
 
 ### "Port 8080 already in use"
 ```bash

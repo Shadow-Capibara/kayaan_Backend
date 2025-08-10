@@ -46,10 +46,10 @@ application:
 
 kayaan:
    supabase:
-    url: https://ljapyahphaohoanshamz.supabase.co
+    url: ${SUPABASE_URL:https://ljapyahphaohoanshamz.supabase.co}
     serviceKey: ${SUPABASE_SERVICE_KEY:}
     buckets:
-      avatars: avatars
+      avatars: ${SUPABASE_BUCKET_AVATARS:avatars}
       ai: ai-outputs
     realtime:
       enabled: false

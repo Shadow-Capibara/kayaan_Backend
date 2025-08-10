@@ -38,12 +38,18 @@ public class SupabaseStorageAdapter implements StorageService {
     @Override
     public SignedUrl createSignedUploadUrl(String bucket, String path, int expiresInSeconds, String contentType) {
         try {
-            String url = supabaseUrl + "/storage/v1/object/sign/" + bucket + "/" + path;
+            // Use correct endpoint for signed upload URL
+            String url = supabaseUrl + "/storage/v1/object/upload/sign/" + bucket + "/" + path;
+            
+            // Trim the service key to remove any whitespace
+            String trimmedServiceKey = serviceKey.trim();
             
             System.out.println("Supabase URL: " + url);
             System.out.println("Bucket: " + bucket);
             System.out.println("Path: " + path);
             System.out.println("ContentType: " + contentType);
+            System.out.println("Service Key (masked): " + (trimmedServiceKey.length() > 8 ? 
+                trimmedServiceKey.substring(0, 8) + "..." + trimmedServiceKey.substring(trimmedServiceKey.length() - 4) : "***"));
             
             Map<String, Object> requestBody = Map.of(
                 "expiresIn", expiresInSeconds,
@@ -55,8 +61,8 @@ public class SupabaseStorageAdapter implements StorageService {
             
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
-                    .header("Authorization", "Bearer " + serviceKey)
-                    .header("apikey", serviceKey)
+                    .header("Authorization", "Bearer " + trimmedServiceKey)
+                    .header("apikey", trimmedServiceKey)
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
                     .build();
@@ -66,10 +72,11 @@ public class SupabaseStorageAdapter implements StorageService {
             System.out.println("Response status: " + response.statusCode());
             System.out.println("Response body: " + response.body());
             
-            if (response.statusCode() == 200) {
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
                 SignedUrlResponse signedUrlResponse = objectMapper.readValue(response.body(), SignedUrlResponse.class);
                 return new SignedUrl(signedUrlResponse.signedURL, path, expiresInSeconds);
             } else {
+                System.err.println("Supabase API Error - Status: " + response.statusCode() + ", Body: " + response.body());
                 throw new RuntimeException("Failed to create signed URL. Status: " + response.statusCode() + ", Body: " + response.body());
             }
             
