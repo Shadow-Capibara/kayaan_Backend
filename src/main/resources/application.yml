@@ -4,6 +4,10 @@ spring:
       - db
   application:
     name: Kayaan-Backend
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
   datasource:
     url: jdbc:mysql://localhost:3307/kayaan_db?createDatabaseIfNotExist=true&autoReconnect=true&characterEncoding=UTF-8&allowMultiQueries=true&allowPublicKeyRetrieval=true&useSSL=false&useUnicode=true
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -46,7 +50,7 @@ application:
 
 supabase:
   url: ${SUPABASE_URL:https://ljapyahphaohoanshamz.supabase.co}
-  serviceKey: ${SUPABASE_SERVICE_KEY:}
+  serviceKey: ${SUPABASE_SERVICE_KEY:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqYXB5YWhwaGFvaG9hbnNoYW16Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDgxNTU1MSwiZXhwIjoyMDcwMzkxNTUxfQ.QexhYWtuHU3zqIZy7AjrgZf0Po_FcOpTzMlxXtG0NKI}
 
 kayaan:
    supabase:
