@@ -82,8 +82,24 @@ public class SupabaseStorageAdapter implements StorageService {
             if (response.statusCode() / 100 == 2) {
                 // ชื่อฟิลด์ของ Supabase เป็น camelCase: signedUrl
                 SignedUrlResponse body = objectMapper.readValue(response.body(), SignedUrlResponse.class);
-                // รองรับทั้ง signedUrl และ signedURL เผื่อเวอร์ชันต่างกัน
-                String signed = body.signedUrl != null ? body.signedUrl : body.signedURL;
+                System.out.println("Parsed response - url: " + body.url);
+                System.out.println("Parsed response - signedUrl: " + body.signedUrl);
+                System.out.println("Parsed response - signedURL: " + body.signedURL);
+                System.out.println("Parsed response - token: " + body.token);
+                // รองรับทั้ง signedUrl, signedURL, url และ token เผื่อเวอร์ชันต่างกัน
+                String signed = body.url != null ? body.url : 
+                               body.signedUrl != null ? body.signedUrl : 
+                               body.signedURL != null ? body.signedURL : null;
+                System.out.println("Selected signed URL: " + signed);
+                // ถ้า signed URL เป็น relative path ให้เพิ่ม base URL
+                if (signed != null && signed.startsWith("/")) {
+                    signed = supabaseUrl + signed;
+                    System.out.println("Full signed URL: " + signed);
+                }
+                if (signed == null) {
+                    System.err.println("No signed URL found in response. Response body: " + response.body());
+                    throw new RuntimeException("No signed URL found in response");
+                }
                 return new SignedUrl(signed, path, expiresInSeconds);
             }
             throw new RuntimeException("Failed to create signed URL. Status: " + response.statusCode() + ", Body: " + response.body());
@@ -126,6 +142,8 @@ public class SupabaseStorageAdapter implements StorageService {
     public static class SignedUrlResponse {
         public String signedUrl;  // ← ตามเอกสารปัจจุบัน
         public String signedURL;  // ← กันเหนียว
+        public String url;        // ← response format ปัจจุบัน
+        public String token;      // ← response format ปัจจุบัน
         public String path;
     }
 }
