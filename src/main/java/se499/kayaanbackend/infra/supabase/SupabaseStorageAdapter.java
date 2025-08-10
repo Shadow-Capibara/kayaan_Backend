@@ -1,5 +1,6 @@
 package se499.kayaanbackend.infra.supabase;
 
+import java.net.ProxySelector;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -17,30 +18,51 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import jakarta.annotation.PostConstruct;
 import se499.kayaanbackend.shared.storage.StorageService;
 
 @Component
 @Primary
 public class SupabaseStorageAdapter implements StorageService {
-    
+
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final String supabaseUrl;
     private final String serviceKey;
-    
+
     public SupabaseStorageAdapter(
             @Value("${supabase.url}") String supabaseUrl,
             @Value("${supabase.serviceKey}") String serviceKey) {
         this.supabaseUrl = supabaseUrl;
         this.serviceKey = serviceKey;
         this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(10))
+                .proxy(ProxySelector.getDefault())
+                .connectTimeout(Duration.ofSeconds(30))
+                .version(HttpClient.Version.HTTP_1_1)
                 .build();
         this.objectMapper = new ObjectMapper();
     }
     
+    @PostConstruct
+    void validateSupabaseConfig() {
+        System.out.println("=== Supabase Configuration Validation ===");
+        System.out.println("Supabase URL runtime: [" + supabaseUrl + "]");
+        System.out.println("Service key length: " + (serviceKey == null ? "null" : serviceKey.length()));
+        System.out.println("Service key dotCount: " + (serviceKey == null ? "null" : serviceKey.chars().filter(ch -> ch=='.').count()));
+        
+        if (supabaseUrl == null || !supabaseUrl.startsWith("https://") || supabaseUrl.contains(" ")) {
+            throw new IllegalStateException("supabase.url is invalid: " + supabaseUrl);
+        }
+        if (serviceKey == null || serviceKey.chars().filter(ch -> ch=='.').count() != 2) {
+            throw new IllegalStateException("supabase.serviceKey is not a valid JWT (missing 2 dots). Length: " + 
+                (serviceKey == null ? "null" : serviceKey.length()) + 
+                ", Dot count: " + (serviceKey == null ? "null" : serviceKey.chars().filter(ch -> ch=='.').count()));
+        }
+        System.out.println("=== Supabase Configuration Validation PASSED ===");
+    }
+    
     @Override
-    public SignedUrl createSignedUploadUrl(String bucket, String path, int expiresInSeconds, String contentType) {
+    public StorageService.SignedUrl createSignedUploadUrl(String bucket, String path, int expiresInSeconds, String contentType) {
         try {
             // encode ทีละ segment
             String[] segments = path.split("/");
@@ -100,7 +122,7 @@ public class SupabaseStorageAdapter implements StorageService {
                     System.err.println("No signed URL found in response. Response body: " + response.body());
                     throw new RuntimeException("No signed URL found in response");
                 }
-                return new SignedUrl(signed, path, expiresInSeconds);
+                return new StorageService.SignedUrl(signed, path, expiresInSeconds);
             }
             throw new RuntimeException("Failed to create signed URL. Status: " + response.statusCode() + ", Body: " + response.body());
 
