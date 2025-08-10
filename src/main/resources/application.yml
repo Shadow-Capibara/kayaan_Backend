@@ -46,7 +46,7 @@ application:
 
 supabase:
   url: ${SUPABASE_URL:https://ljapyahphaohoanshamz.supabase.co}
-  serviceKey: ${SUPABASE_SERVICE_KEY}
+  serviceKey: ${SUPABASE_SERVICE_KEY:}
 
 kayaan:
    supabase:
