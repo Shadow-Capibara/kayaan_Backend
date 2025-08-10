@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.extern.slf4j.Slf4j;
 import se499.kayaanbackend.DTO.AvatarDTO;
 import se499.kayaanbackend.security.user.User;
@@ -39,14 +42,21 @@ public class AvatarController {
         log.info("StorageService impl = {}", storageService.getClass().getName());
     }
     
-    @PostMapping("/{id}/avatar-upload-url")
+    @PostMapping(
+        value = "/{id}/avatar-upload-url",
+        consumes = MediaType.APPLICATION_JSON_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE
+    )
     @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
     public ResponseEntity<?> requestAvatarUploadUrl(
             @PathVariable Integer id,
-            @RequestBody AvatarUploadUrlRequest request,
+            @Valid @RequestBody AvatarUploadUrlRequest request,
             @AuthenticationPrincipal User currentUser
     ) {
         try {
+            log.info("Creating upload URL for user {} with fileName: {}, contentType: {}", 
+                    id, request.fileName(), request.contentType());
+            
             String timestamp = String.valueOf(Instant.now().toEpochMilli());
             String path = String.format("users/%d/%s_%s", id, timestamp, request.fileName());
             
@@ -63,6 +73,7 @@ public class AvatarController {
                 "expiresIn", signedUrl.expiresInSeconds()
             ));
         } catch (Exception e) {
+            log.error("Error creating upload URL for user {}: {}", id, e.getMessage(), e);
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
@@ -94,7 +105,12 @@ public class AvatarController {
     /**
      * Request DTO for avatar upload URL
      */
-    public record AvatarUploadUrlRequest(String fileName, String contentType) {}
+    public record AvatarUploadUrlRequest(
+        @NotBlank(message = "fileName must not be blank") 
+        String fileName, 
+        @NotBlank(message = "contentType must not be blank") 
+        String contentType
+    ) {}
     
     /**
      * Request DTO for avatar URL update

@@ -22,6 +22,20 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
+# Error handling configuration
+server:
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: never
+
+# Logging configuration for debugging
+logging:
+  level:
+    org.springframework.web: DEBUG
+    org.springframework.validation: DEBUG
+    se499.kayaanbackend.controller.AvatarController: DEBUG
+
 application:
   security:
     jwt:
