@@ -44,13 +44,15 @@ application:
       refresh-token:
         expiration: 604800000
 
+supabase:
+  url: ${SUPABASE_URL:https://ljapyahphaohoanshamz.supabase.co}
+  serviceKey: ${SUPABASE_SERVICE_KEY:}
+
 kayaan:
    supabase:
-    url: ${SUPABASE_URL:https://ljapyahphaohoanshamz.supabase.co}
-    serviceKey: ${SUPABASE_SERVICE_KEY:}
     buckets:
       avatars: ${SUPABASE_BUCKET_AVATARS:avatars}
-      ai: ai-outputs
+      ai: ${SUPABASE_BUCKET_AI:ai-outputs}
     realtime:
       enabled: false
       groupChannelPrefix: groups.

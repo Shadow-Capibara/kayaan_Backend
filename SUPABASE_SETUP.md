@@ -105,7 +105,13 @@ curl -X POST "$SUPABASE_URL/storage/v1/object/upload/sign/avatars/users/103/test
 # 1. Check environment variable
 echo "Service Key: ${SUPABASE_SERVICE_KEY:0:10}..."
 
-# 2. Test Supabase API directly
+# 2. Test Supabase health check
+curl -i \
+  -H "Authorization: Bearer $SUPABASE_SERVICE_KEY" \
+  -H "apikey: $SUPABASE_SERVICE_KEY" \
+  "$SUPABASE_URL/auth/v1/health"
+
+# 3. Test Supabase storage API directly
 curl -X POST "$SUPABASE_URL/storage/v1/object/upload/sign/avatars/test.jpg" \
   -H "Authorization: Bearer $SUPABASE_SERVICE_KEY" \
   -H "apikey: $SUPABASE_SERVICE_KEY" \
@@ -113,7 +119,7 @@ curl -X POST "$SUPABASE_URL/storage/v1/object/upload/sign/avatars/test.jpg" \
   -d '{"expiresIn": 600, "contentType": "image/jpeg"}' \
   -v
 
-# 3. Check application logs for debug output
+# 4. Check application logs for debug output
 ```
 
 ### "Port 8080 already in use"
