@@ -29,6 +29,12 @@ public interface StorageService {
     boolean delete(String bucket, String path);
     
     /**
+     * Gets the service key for authentication
+     * @return The service key
+     */
+    String getServiceKey();
+    
+    /**
      * Record representing a signed URL response
      * @param url The signed URL for upload
      * @param path The file path

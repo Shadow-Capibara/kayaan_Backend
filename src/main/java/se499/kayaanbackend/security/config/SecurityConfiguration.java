@@ -51,7 +51,7 @@ public class SecurityConfiguration {
 //                      .anyRequest().authenticated()
 //              )
 .authorizeHttpRequests(auth -> auth
-.requestMatchers("/api/v1/auth/**").permitAll()
+.requestMatchers("/api/v1/auth/**", "/api/auth/**").permitAll()
 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()   // เผื่อ preflight
 
 .requestMatchers(HttpMethod.GET,  "/api/themes").permitAll()
@@ -59,10 +59,9 @@ public class SecurityConfiguration {
 
 // ใช้ ant pattern (*) แทน {id}
 .requestMatchers(HttpMethod.POST, "/api/users/*/avatar-upload-url").authenticated()
-.requestMatchers(HttpMethod.PUT,  "/api/users/*/avatar-url").authenticated()
-
-// เส้นที่มีจริงใน BE คือ /api/avatar/upload-proxy (ไม่มี /users/{id}/...)
 .requestMatchers(HttpMethod.POST, "/api/avatar/upload-proxy").authenticated()
+.requestMatchers(HttpMethod.POST, "/api/users/*/avatar-upload-proxy").authenticated()
+.requestMatchers(HttpMethod.PUT,  "/api/users/*/avatar-url").authenticated()
 
 // ถ้าคุณมีเส้นอื่นใต้ /api/users/{id}/... แล้วต้องการบังคับ auth:
 .requestMatchers("/api/users/*/**").authenticated()

@@ -135,49 +135,48 @@ public class AvatarController {
         }
     }
 
-    @PostMapping(value = "/{id}/avatar-upload-proxy", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
-    public ResponseEntity<?> proxyUpload(
-            @PathVariable Long id,
-            @RequestPart("file") MultipartFile file,
-            @RequestParam("signedUrl") String signedUrl
-    ) throws Exception {
-        log.info("Proxy upload request for user {} - File: {}, Size: {} bytes", 
-                id, file.getOriginalFilename(), file.getSize());
 
-        if (file.isEmpty()) {
-            log.warn("Empty file received for user {}", id);
-            return ResponseEntity.badRequest().body(Map.of("error", "File is empty"));
-        }
-        
-        if (file.getSize() > 5 * 1024 * 1024) { // 5MB guard
-            log.warn("File too large for user {}: {} bytes", id, file.getSize());
-            return ResponseEntity.badRequest().body(Map.of("error", "File too large (>5MB)"));
-        }
-        
+
+    private final HttpClient http = HttpClient.newBuilder()
+        .connectTimeout(Duration.ofSeconds(30))
+        .build();
+
+    @PostMapping(value = "/avatar/upload-proxy", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> proxyUpload(
+        @RequestPart("file") MultipartFile file,
+        @RequestParam("signedUrl") String signedUrl
+    ) throws Exception {
+
+        if (file.isEmpty()) return ResponseEntity.badRequest().body(Map.of("error","File is empty"));
+        if (file.getSize() > 5 * 1024 * 1024) return ResponseEntity.badRequest().body(Map.of("error","File too large (>5MB)"));
+
         final String contentType = file.getContentType() != null ? file.getContentType() : "application/octet-stream";
 
-        log.info("Uploading to Supabase for user {} - Content-Type: {}, SignedUrl: {}", id, contentType, signedUrl);
+        // --- DEBUG: เทียบ path ใน URL vs path ใน token ---
+        URI u = URI.create(signedUrl);
+        String pathFromUrl = u.getPath();                 // ex: /storage/v1/object/upload/sign/avatars/users/103/xxx.jpg
+        String token = u.getQuery().replaceFirst("^token=", "");
+        String payloadJson = new String(java.util.Base64.getUrlDecoder().decode(token.split("\\.")[1]));
+        String pathInToken = new com.fasterxml.jackson.databind.ObjectMapper().readTree(payloadJson).get("url").asText();  // ex: avatars/users/103/xxx.jpg
 
-        HttpClient http = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(20))
-                .build();
+        log.info("DBG signedUrl.path     : {}", pathFromUrl);
+        log.info("DBG token.payload.url  : {}", pathInToken);
+        log.info("DBG contentType(put)   : {}", contentType);
 
         HttpRequest req = HttpRequest.newBuilder(URI.create(signedUrl))
-                .header("Content-Type", contentType)
-                .PUT(HttpRequest.BodyPublishers.ofByteArray(file.getBytes()))
-                .build();
+            .header("Content-Type", contentType)         // สำคัญ! มีแค่นี้พอ
+            .PUT(HttpRequest.BodyPublishers.ofByteArray(file.getBytes()))
+            .build();
 
         HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
 
-        int sc = resp.statusCode();
-        log.info("Supabase response for user {} - Status: {}, Body: {}", id, sc, resp.body());
-        
-        if (sc >= 200 && sc < 300) {
-            return ResponseEntity.ok().body(Map.of("message", "Upload successful"));
+        if (resp.statusCode() >= 200 && resp.statusCode() < 300) {
+            return ResponseEntity.ok(Map.of("message", "Upload successful"));
         }
-        
-        return ResponseEntity.status(sc).body(Map.of("error", "Upload failed", "details", resp.body()));
+        return ResponseEntity.status(resp.statusCode()).body(Map.of(
+            "error","Upload failed",
+            "details", resp.body()
+        ));
     }
     
     /**

@@ -1,104 +1,106 @@
 #!/bin/bash
 
-# Test script for avatar upload URL endpoint
-# Usage: ./test_avatar_upload.sh <JWT_TOKEN> <USER_ID>
+# Avatar Upload Test Script
+# ใช้สำหรับทดสอบ flow การอัปโหลด avatar ผ่าน backend proxy
 
-JWT_TOKEN=$1
-USER_ID=$2
+# ========================================
+# ตั้งค่าตัวแปร (แก้ไขตามต้องการ)
+# ========================================
+TOKEN="eyJhbGciOiJIUzI1NiJ9.eyJyb2xlcyI6W10sImVtYWlsIjoiZnhyZWQ3MjdAZ21haWwuY29tIiwidXNlcm5hbWUiOiJTYW0xIiwic3ViIjoiMTAzIiwiaWF0IjoxNzU0OTcxNjQ4LCJleHAiOjE3NTUwNTgwNDh9.Q0ZUF84nJzs-J1wkdwKVdo8VvoKpHMESO3mv44xGP6Q"
+BASE="http://localhost:8080/api"
+USER_ID=103
+FILE="/Users/wasanrenumat/kayaan_Backend/uploads/avatars/user_402.jpg"  # แก้ไขเป็นพาธไฟล์จริง
 
-if [ -z "$JWT_TOKEN" ] || [ -z "$USER_ID" ]; then
-    echo "Usage: $0 <JWT_TOKEN> <USER_ID>"
-    echo "Example: $0 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' 103"
+# ========================================
+# ตรวจสอบตัวแปร
+# ========================================
+echo "🔍 ตรวจสอบการตั้งค่า..."
+echo "BASE URL: $BASE"
+echo "USER ID: $USER_ID"
+echo "FILE: $FILE"
+
+if [ "$TOKEN" = "<ใส่ JWT token ที่นี่>" ]; then
+    echo "❌ กรุณาใส่ JWT token ในตัวแปร TOKEN"
     exit 1
 fi
 
-echo "Testing avatar upload URL endpoint for user $USER_ID"
-echo "=================================================="
+if [ ! -f "$FILE" ]; then
+    echo "❌ ไม่พบไฟล์: $FILE"
+    exit 1
+fi
 
-# Test 1: Valid request with standard field names
-echo "Test 1: Valid JSON request with standard field names"
-curl -X POST "http://localhost:8080/api/users/$USER_ID/avatar-upload-url" \
-  -H "Authorization: Bearer $JWT_TOKEN" \
+echo "✅ การตั้งค่าถูกต้อง"
+echo ""
+
+# ========================================
+# ขั้นตอนที่ 1: ขอ signed URL
+# ========================================
+echo "📤 ขั้นตอนที่ 1: ขอ signed URL..."
+RESPONSE=$(curl -s -X POST "$BASE/users/$USER_ID/avatar-upload-url" \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"fileName":"IMG_6045.jpeg","contentType":"image/jpeg"}' \
-  -w "\nHTTP Status: %{http_code}\n" \
-  -s
+  -d '{"fileName":"test.jpg","contentType":"image/jpeg"}')
 
-echo -e "\n\n"
+echo "Response: $RESPONSE"
 
-# Test 2: Valid request with filename alias
-echo "Test 2: Valid JSON request with filename alias"
-curl -X POST "http://localhost:8080/api/users/$USER_ID/avatar-upload-url" \
-  -H "Authorization: Bearer $JWT_TOKEN" \
+# แยก signedUrl และ path จาก response
+SIGNED_URL=$(echo "$RESPONSE" | grep -o '"signedUrl":"[^"]*"' | cut -d'"' -f4)
+PATH_IN_BUCKET=$(echo "$RESPONSE" | grep -o '"path":"[^"]*"' | cut -d'"' -f4)
+
+if [ -z "$SIGNED_URL" ]; then
+    echo "❌ ไม่สามารถขอ signed URL ได้"
+    echo "Response: $RESPONSE"
+    exit 1
+fi
+
+echo "✅ ได้ signed URL: $SIGNED_URL"
+echo "✅ Path in bucket: $PATH_IN_BUCKET"
+echo ""
+
+# ========================================
+# ขั้นตอนที่ 2: อัปโหลดไฟล์ผ่าน proxy
+# ========================================
+echo "�� ขั้นตอนที่ 2: อัปโหลดไฟล์ผ่าน proxy..."
+UPLOAD_RESPONSE=$(curl -s -X POST "$BASE/avatar/upload-proxy" \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "file=@$FILE;type=image/jpeg" \
+  -F "signedUrl=$SIGNED_URL")
+
+echo "Upload Response: $UPLOAD_RESPONSE"
+
+if echo "$UPLOAD_RESPONSE" | grep -q '"message":"Upload successful"'; then
+    echo "✅ อัปโหลดสำเร็จ!"
+else
+    echo "❌ อัปโหลดล้มเหลว"
+    echo "Response: $UPLOAD_RESPONSE"
+    exit 1
+fi
+echo ""
+
+# ========================================
+# ขั้นตอนที่ 3: บันทึก URL (ถ้าต้องการ)
+# ========================================
+echo "📤 ขั้นตอนที่ 3: บันทึก URL..."
+SAVE_RESPONSE=$(curl -s -X PUT "$BASE/users/$USER_ID/avatar-url" \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"filename":"IMG_6045.jpeg","contentType":"image/jpeg"}' \
-  -w "\nHTTP Status: %{http_code}\n" \
-  -s
+  -d "{\"path\":\"$PATH_IN_BUCKET\"}")
 
-echo -e "\n\n"
+echo "Save Response: $SAVE_RESPONSE"
 
-# Test 3: Valid request with mimeType alias
-echo "Test 3: Valid JSON request with mimeType alias"
-curl -X POST "http://localhost:8080/api/users/$USER_ID/avatar-upload-url" \
-  -H "Authorization: Bearer $JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"fileName":"IMG_6045.jpeg","mimeType":"image/jpeg"}' \
-  -w "\nHTTP Status: %{http_code}\n" \
-  -s
+if echo "$SAVE_RESPONSE" | grep -q '"id"'; then
+    echo "✅ บันทึก URL สำเร็จ!"
+else
+    echo "❌ บันทึก URL ล้มเหลว"
+    echo "Response: $SAVE_RESPONSE"
+fi
+echo ""
 
-echo -e "\n\n"
-
-# Test 4: Missing fileName (should return 400)
-echo "Test 4: Missing fileName (should return 400)"
-curl -X POST "http://localhost:8080/api/users/$USER_ID/avatar-upload-url" \
-  -H "Authorization: Bearer $JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"contentType":"image/jpeg"}' \
-  -w "\nHTTP Status: %{http_code}\n" \
-  -s
-
-echo -e "\n\n"
-
-# Test 5: Missing contentType (should return 400)
-echo "Test 5: Missing contentType (should return 400)"
-curl -X POST "http://localhost:8080/api/users/$USER_ID/avatar-upload-url" \
-  -H "Authorization: Bearer $JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"fileName":"IMG_6045.jpeg"}' \
-  -w "\nHTTP Status: %{http_code}\n" \
-  -s
-
-echo -e "\n\n"
-
-# Test 6: Empty fileName (should return 400)
-echo "Test 6: Empty fileName (should return 400)"
-curl -X POST "http://localhost:8080/api/users/$USER_ID/avatar-upload-url" \
-  -H "Authorization: Bearer $JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"fileName":"","contentType":"image/jpeg"}' \
-  -w "\nHTTP Status: %{http_code}\n" \
-  -s
-
-echo -e "\n\n"
-
-# Test 7: Empty contentType (should return 400)
-echo "Test 7: Empty contentType (should return 400)"
-curl -X POST "http://localhost:8080/api/users/$USER_ID/avatar-upload-url" \
-  -H "Authorization: Bearer $JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"fileName":"IMG_6045.jpeg","contentType":""}' \
-  -w "\nHTTP Status: %{http_code}\n" \
-  -s
-
-echo -e "\n\n"
-
-# Test 8: Wrong Content-Type header (should return 400)
-echo "Test 8: Wrong Content-Type header (should return 400)"
-curl -X POST "http://localhost:8080/api/users/$USER_ID/avatar-upload-url" \
-  -H "Authorization: Bearer $JWT_TOKEN" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d 'fileName=IMG_6045.jpeg&contentType=image/jpeg' \
-  -w "\nHTTP Status: %{http_code}\n" \
-  -s
-
-echo -e "\n\nTest completed!"
+# ========================================
+# สรุปผล
+# ========================================
+echo "🎉 การทดสอบเสร็จสิ้น!"
+echo "📁 ไฟล์ที่อัปโหลด: $FILE"
+echo "🗂️ Path ใน bucket: $PATH_IN_BUCKET"
+echo ""
+echo "💡 หากต้องการทดสอบอีกครั้ง ให้รันสคริปต์นี้อีกครั้ง"
