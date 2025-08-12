@@ -20,4 +20,10 @@ public class MockStorageService implements StorageService {
         // Mock delete operation - always return true
         return true;
     }
+    
+    @Override
+    public String getServiceKey() {
+        // Return mock service key for development
+        return "mock-service-key";
+    }
 }

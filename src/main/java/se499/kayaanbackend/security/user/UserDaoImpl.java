@@ -1,9 +1,10 @@
 package se499.kayaanbackend.security.user;
 
-import lombok.RequiredArgsConstructor;
+import java.util.Optional;
+
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor
@@ -21,7 +22,7 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public Optional<User> findById(Long id) {
+    public Optional<User> findById(Integer id) {
         return userRepository.findById(id);
     }
 

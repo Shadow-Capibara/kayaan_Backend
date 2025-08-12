@@ -6,5 +6,5 @@ public interface UserDao {
     User findByUsername(String username);
 
     User save(User user);
-    Optional<User> findById(Long id);
+    Optional<User> findById(Integer id);
 }

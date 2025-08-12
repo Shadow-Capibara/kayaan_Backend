@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -21,6 +22,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfiguration {
 
@@ -65,6 +67,9 @@ public class SecurityConfiguration {
 
 // ถ้าคุณมีเส้นอื่นใต้ /api/users/{id}/... แล้วต้องการบังคับ auth:
 .requestMatchers("/api/users/*/**").authenticated()
+
+// Study Group endpoints - require authentication
+.requestMatchers("/api/groups/**").authenticated()
 
 .anyRequest().authenticated()
 )

@@ -54,7 +54,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     if (userIdentifier != null && SecurityContextHolder.getContext().getAuthentication() == null) {
       UserDetails userDetails;
       if (userIdentifier.matches("\\d+")) {          // subject is numeric -> treat as id
-        Long id = Long.parseLong(userIdentifier);
+        Integer id = Integer.parseInt(userIdentifier);
         var userOpt = userDao.findById(id);
         if (userOpt.isEmpty()) {
           filterChain.doFilter(request, response);
