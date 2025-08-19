@@ -6,7 +6,10 @@ import org.springframework.stereotype.Service;
 
 import se499.kayaanbackend.Manual_Generate.Quiz.dto.QuizRequestDTO;
 import se499.kayaanbackend.Manual_Generate.Quiz.dto.QuizResponseDTO;
+
 import se499.kayaanbackend.Manual_Generate.Quiz.repository.QuizRepository;
+import se499.kayaanbackend.Manual_Generate.Group.entity.Group;
+import se499.kayaanbackend.Manual_Generate.Group.repository.GroupRepository;
 
 @Service
 public class QuizServiceImpl implements QuizService {
@@ -15,6 +18,7 @@ public class QuizServiceImpl implements QuizService {
     
     public QuizServiceImpl(QuizRepository quizRepository) {
         this.quizRepository = quizRepository;
+
     }
     
     @Override
@@ -27,6 +31,7 @@ public class QuizServiceImpl implements QuizService {
     public QuizResponseDTO getQuizById(Long id, String username) {
         // Stub implementation - return null for now
         return null;
+
     }
     
     @Override
@@ -38,5 +43,6 @@ public class QuizServiceImpl implements QuizService {
     @Override
     public void deleteQuiz(Long id, String username) {
         // Stub implementation - do nothing
+
     }
 }

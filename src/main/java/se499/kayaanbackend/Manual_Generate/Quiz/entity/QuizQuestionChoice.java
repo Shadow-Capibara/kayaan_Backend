@@ -6,7 +6,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "quiz_question_choice")
+@Table(name = "QUESTION_CHOICE")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -15,7 +15,9 @@ import java.time.LocalDateTime;
 public class QuizQuestionChoice {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer choiceID;
+    @Column(name = "choice_id")
+    private Long choiceID;
+
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "questionID", nullable = false)

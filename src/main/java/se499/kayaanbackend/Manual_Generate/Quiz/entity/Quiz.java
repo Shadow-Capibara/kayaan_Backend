@@ -1,7 +1,9 @@
 package se499.kayaanbackend.Manual_Generate.Quiz.entity;
 
+
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -20,6 +22,7 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Builder
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -46,4 +49,5 @@ public class Quiz {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
     }
+
 }

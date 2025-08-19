@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import se499.kayaanbackend.Manual_Generate.Note.dto.NoteRequestDTO;
 import se499.kayaanbackend.Manual_Generate.Note.dto.NoteResponseDTO;
 import se499.kayaanbackend.Manual_Generate.Note.repository.NoteRepository;
+import se499.kayaanbackend.Manual_Generate.Group.entity.Group;
+import se499.kayaanbackend.Manual_Generate.Group.repository.GroupRepository;
 
 @Service
 public class NoteServiceImpl implements NoteService {
@@ -21,18 +23,21 @@ public class NoteServiceImpl implements NoteService {
     public NoteResponseDTO createNote(NoteRequestDTO dto, String username) {
         // Stub implementation - return null for now
         return null;
+
     }
     
     @Override
     public List<NoteResponseDTO> getAllNotesForUser(String username) {
         // Stub implementation - return empty list
         return List.of();
+
     }
     
     @Override
     public NoteResponseDTO getNoteById(Long id, String username) {
         // Stub implementation - return null for now
         return null;
+
     }
     
     @Override

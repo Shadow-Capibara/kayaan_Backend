@@ -16,6 +16,7 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Builder
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -51,4 +52,5 @@ public class Flashcard {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
     }
+
 }

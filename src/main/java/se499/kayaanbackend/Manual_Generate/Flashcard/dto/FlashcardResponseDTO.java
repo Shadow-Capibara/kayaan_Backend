@@ -18,4 +18,5 @@ public class FlashcardResponseDTO {
     private String subject;
     private String difficulty;
     private String tags;
+
 }

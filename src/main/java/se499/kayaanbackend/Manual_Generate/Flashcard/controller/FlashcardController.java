@@ -2,6 +2,7 @@ package se499.kayaanbackend.Manual_Generate.Flashcard.controller;
 
 import java.util.List;
 
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,6 +17,7 @@ import se499.kayaanbackend.Manual_Generate.Flashcard.dto.FlashcardRequestDTO;
 import se499.kayaanbackend.Manual_Generate.Flashcard.dto.FlashcardResponseDTO;
 import se499.kayaanbackend.Manual_Generate.Flashcard.service.FlashcardService;
 import se499.kayaanbackend.security.user.User;
+
 
 @RestController
 @RequestMapping("/api/flashcards")
@@ -33,6 +35,7 @@ public class FlashcardController {
             @AuthenticationPrincipal User currentUser) {
         // Stub implementation - return null for now
         return ResponseEntity.ok(null);
+
     }
     
     @GetMapping
@@ -40,6 +43,7 @@ public class FlashcardController {
             @AuthenticationPrincipal User currentUser) {
         // Stub implementation - return empty list
         return ResponseEntity.ok(List.of());
+
     }
     
     @GetMapping("/{id}")
@@ -57,4 +61,5 @@ public class FlashcardController {
         // Stub implementation - do nothing
         return ResponseEntity.ok().build();
     }
+
 }

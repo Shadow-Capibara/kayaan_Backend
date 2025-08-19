@@ -1,6 +1,8 @@
 package se499.kayaanbackend.Manual_Generate.Quiz.entity;
 
+
 import java.util.List;
+import java.util.Set;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -20,6 +22,7 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Builder
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -42,4 +45,5 @@ public class QuizQuestion {
     
     @Column(name = "correct_answer")
     private String correctAnswer;
+
 }

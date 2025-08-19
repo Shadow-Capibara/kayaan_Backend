@@ -11,9 +11,13 @@ public interface QuizService {
 
     // Fetch all quizzes this user created
     List<QuizResponseDTO> getAllQuizzesForUser(String username);
+    List<QuizResponseDTO> getQuizzesByCategory(String username, String category);
+    List<QuizResponseDTO> getQuizzesBySubject(String username, String subject);
 
     // Fetch a single quiz by id (only if it belongs to this user)
     QuizResponseDTO getQuizById(Long quizId, String username);
+
+    QuizResponseDTO updateQuiz(Long quizId, QuizRequestDTO requestDto, String username);
 
     // Delete a quiz (if owned by this user)
     void deleteQuiz(Long quizId, String username);

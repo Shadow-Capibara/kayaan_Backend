@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 public class FlashcardImage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer imageID;
+    private Long imageID;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "flashcardID", nullable = false)

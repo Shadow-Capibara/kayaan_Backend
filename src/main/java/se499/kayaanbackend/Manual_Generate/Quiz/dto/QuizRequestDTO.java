@@ -14,5 +14,6 @@ import lombok.NoArgsConstructor;
 public class QuizRequestDTO {
     
     private String title;
+
     private List<QuizQuestionRequestDTO> questions;
 }

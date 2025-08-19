@@ -16,6 +16,7 @@ public class QuizResponseDTO {
     private Long id;
     private String title;
     private String createdByUsername;
+
     private List<QuestionResponse> questions;
     
     @Data

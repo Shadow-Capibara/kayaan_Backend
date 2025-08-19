@@ -15,11 +15,11 @@ import java.time.LocalDateTime;
 public class NoteImage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer imageID;
+    private Long imageID;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "noteID", nullable = false)
-    private NoteInformation noteInformation;
+    private NoteInfo noteInformation;
 
     @Column(nullable = false)
     private String imageURL;
