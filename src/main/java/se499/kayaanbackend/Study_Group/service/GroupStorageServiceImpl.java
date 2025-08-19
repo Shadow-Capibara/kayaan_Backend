@@ -4,35 +4,27 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import se499.kayaanbackend.shared.storage.StorageService;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class GroupStorageServiceImpl implements GroupStorageService {
     
-    @Value("${kayaan.supabase.url}")
-    private String supabaseUrl;
-    
-    @Value("${kayaan.supabase.service-key}")
-    private String supabaseServiceKey;
-    
-    @Value("${kayaan.supabase.buckets.library:library}")
+    @Value("${kayaan.supabase.buckets.library:study-content}")
     private String libraryBucket;
     
-    private final RestTemplate restTemplate = new RestTemplate();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    @Value("${kayaan.supabase.signed-get-ttl:300}")
+    private int signedGetTtl;
+    
+    @Value("${kayaan.supabase.signed-get-skew-sec:10}")
+    private int signedGetSkewSec;
+    
+    private final StorageService storageService;
     
     @Override
     public UploadUrlResponse createSignedUploadUrl(Integer groupId, String fileName, String mimeType, Long contentLength) {
@@ -40,13 +32,18 @@ public class GroupStorageServiceImpl implements GroupStorageService {
             // Generate object path: groups/{groupId}/{yyyy}/{MM}/{uuid}-{originalName}
             String objectPath = generateObjectPath(groupId, fileName);
             
-            // Create signed URL using Supabase Storage API
-            String signedUrl = createSupabaseSignedUrl(objectPath, mimeType, contentLength);
+            // Create signed URL via StorageService (mock or supabase adapter)
+            StorageService.SignedUrl signed = storageService.createSignedUploadUrl(
+                    libraryBucket,
+                    objectPath,
+                    600,
+                    ResourceValidationUtil.normalizeContentType(mimeType)
+            );
             
             // Generate file URL for later access
-            String fileUrl = generateFileUrl(objectPath);
+            String fileUrl = storageService.getPublicUrl(libraryBucket, objectPath);
             
-            return new UploadUrlResponse(signedUrl, fileUrl);
+            return new UploadUrlResponse(signed.url(), objectPath, fileUrl);
             
         } catch (Exception e) {
             log.error("Failed to create signed upload URL for group {} and file {}", groupId, fileName, e);
@@ -66,36 +63,18 @@ public class GroupStorageServiceImpl implements GroupStorageService {
         return String.format("groups/%d/%s/%s/%s-%s", groupId, year, month, uuid, sanitizedFileName);
     }
     
-    private String createSupabaseSignedUrl(String objectPath, String mimeType, Long contentLength) {
-        String url = supabaseUrl + "/storage/v1/object/sign/" + libraryBucket + "/" + objectPath;
-        
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("apikey", supabaseServiceKey);
-        headers.set("Authorization", "Bearer " + supabaseServiceKey);
-        headers.set("Content-Type", "application/json");
-        
-        // Request body for signed URL
-        String requestBody = String.format(
-            "{\"expiresIn\": 3600, \"transform\": {\"width\": null, \"height\": null}}"
-        );
-        
-        HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
-        
-        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
-        
-        if (response.getStatusCode().is2xxSuccessful()) {
-            try {
-                JsonNode jsonNode = objectMapper.readTree(response.getBody());
-                return jsonNode.get("signedURL").asText();
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to parse signed URL response", e);
-            }
-        } else {
-            throw new RuntimeException("Failed to create signed URL: " + response.getStatusCode());
-        }
+    // Removed direct HTTP call/generation; delegated to StorageService
+
+    @Override
+    public String getPublicFileUrl(String objectPath) {
+        return storageService.getPublicUrl(libraryBucket, objectPath);
     }
-    
-    private String generateFileUrl(String objectPath) {
-        return supabaseUrl + "/storage/v1/object/public/" + libraryBucket + "/" + objectPath;
+
+    @Override
+    public String createSignedGetUrl(String objectPath, int expiresInSeconds) {
+        int ttl = expiresInSeconds > 0 ? expiresInSeconds : signedGetTtl;
+        // เผื่อเวลา clock skew เล็กน้อย แต่ไม่ให้เกิน TTL
+        int safeTtl = Math.max(60, Math.min(ttl, ttl + Math.max(0, signedGetSkewSec)));
+        return storageService.createSignedGetUrl(libraryBucket, objectPath, safeTtl).url();
     }
 }

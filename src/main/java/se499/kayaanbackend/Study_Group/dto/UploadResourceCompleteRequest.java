@@ -1,11 +1,13 @@
 package se499.kayaanbackend.Study_Group.dto;
 
-import java.util.List;
+import java.util.Map;
 
 public record UploadResourceCompleteRequest(
-    String fileName,
-    String fileUrl,
     String title,
-    String description,
-    List<String> tags
+    String type,
+    Map<String, Object> preview,
+    Map<String, Object> stats,
+    String storagePath,
+    String mimeType,
+    Long size
 ) {}

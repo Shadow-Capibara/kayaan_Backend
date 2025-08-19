@@ -1,16 +1,16 @@
 package se499.kayaanbackend.Study_Group.dto;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 public record ResourceResponse(
     Long id,
     String title,
-    String description,
+    String type,
+    String preview,
     String fileUrl,
+    String storagePath,
     String mimeType,
-    Long fileSize,
-    List<String> tags,
+    String stats,
     Integer uploaderId,
     LocalDateTime createdAt
 ) {}

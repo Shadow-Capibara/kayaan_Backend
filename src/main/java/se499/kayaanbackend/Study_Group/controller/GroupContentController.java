@@ -53,6 +53,15 @@ public class GroupContentController {
         return ResponseEntity.ok(resource);
     }
     
+    @GetMapping("/{groupId}/contents/{id}/preview-url")
+    public ResponseEntity<String> getPreviewUrl(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Integer groupId,
+            @PathVariable Long id) {
+        String url = groupContentService.getPreviewUrl(currentUser.getId(), groupId, id);
+        return ResponseEntity.ok(url);
+    }
+    
     @DeleteMapping("/{groupId}/resources/{resourceId}")
     public ResponseEntity<Void> deleteResource(
             @AuthenticationPrincipal User currentUser,

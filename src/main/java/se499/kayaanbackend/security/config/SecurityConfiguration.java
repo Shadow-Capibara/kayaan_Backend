@@ -12,12 +12,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
+import org.springframework.core.env.Environment;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import org.springframework.http.HttpMethod;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -29,20 +31,14 @@ public class SecurityConfiguration {
   private final JwtAuthenticationFilter jwtAuthFilter;
   private final AuthenticationProvider authenticationProvider;
   private final LogoutHandler logoutHandler;
+  private final Environment environment;
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
       http
               .headers(headers -> headers.frameOptions().disable())
-              .cors(cors -> cors.configurationSource(request -> {
-                  CorsConfiguration config = new CorsConfiguration();
-                  config.setAllowedOrigins(List.of("http://localhost:5173"));
-                  config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-                  config.setAllowedHeaders(List.of("*"));
-                  config.setAllowCredentials(true);
-                  return config;
-              }))
+              .cors(cors -> cors.configurationSource(corsConfigurationSource()))
               .csrf(csrf -> csrf.disable())
 //              .authorizeHttpRequests(auth -> auth
 //                      .requestMatchers("/api/v1/auth/**").permitAll()
@@ -87,9 +83,14 @@ public class SecurityConfiguration {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         var config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        String origins = environment.getProperty("kayaan.cors.allowed-origins");
+        if (origins == null || origins.isBlank()) {
+            origins = System.getProperty("CORS_ALLOWED_ORIGINS", System.getenv().getOrDefault("CORS_ALLOWED_ORIGINS", "http://localhost:5173"));
+        }
+        config.setAllowedOrigins(Arrays.stream(origins.split(",")).map(String::trim).toList());
         config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
         var source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;

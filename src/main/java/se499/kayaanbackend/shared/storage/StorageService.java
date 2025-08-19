@@ -13,6 +13,15 @@ public interface StorageService {
     SignedUrl createSignedUploadUrl(String bucket, String path, int expiresInSeconds, String contentType);
     
     /**
+     * Creates a signed GET URL for downloading/previewing a file from storage
+     * @param bucket The bucket name
+     * @param path The file path within the bucket
+     * @param expiresInSeconds URL expiration time in seconds
+     * @return SignedUrl containing the signed URL, path, and expiration
+     */
+    SignedUrl createSignedGetUrl(String bucket, String path, int expiresInSeconds);
+    
+    /**
      * Gets the public URL for a file in storage
      * @param bucket The bucket name
      * @param path The file path within the bucket

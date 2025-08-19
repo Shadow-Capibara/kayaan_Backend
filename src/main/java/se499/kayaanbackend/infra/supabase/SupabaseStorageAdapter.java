@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,6 +19,7 @@ import jakarta.annotation.PostConstruct;
 import se499.kayaanbackend.shared.storage.StorageService;
 
 @Component
+@Profile("!dev")
 @Primary
 public class SupabaseStorageAdapter implements StorageService {
 
@@ -27,8 +29,8 @@ public class SupabaseStorageAdapter implements StorageService {
     private final String serviceKey;
 
     public SupabaseStorageAdapter(
-            @Value("${supabase.url}") String supabaseUrl,
-            @Value("${supabase.serviceKey}") String serviceKey) {
+            @Value("${kayaan.supabase.url}") String supabaseUrl,
+            @Value("${kayaan.supabase.service-key}") String serviceKey) {
         this.supabaseUrl = supabaseUrl;
         this.serviceKey = serviceKey;
         this.httpClient = HttpClient.newBuilder()
@@ -47,10 +49,10 @@ public class SupabaseStorageAdapter implements StorageService {
         System.out.println("Service key dotCount: " + (serviceKey == null ? "null" : serviceKey.chars().filter(ch -> ch=='.').count()));
         
         if (supabaseUrl == null || !supabaseUrl.startsWith("https://") || supabaseUrl.contains(" ")) {
-            throw new IllegalStateException("supabase.url is invalid: " + supabaseUrl);
+            throw new IllegalStateException("kayaan.supabase.url is invalid: " + supabaseUrl);
         }
         if (serviceKey == null || serviceKey.chars().filter(ch -> ch=='.').count() != 2) {
-            throw new IllegalStateException("supabase.serviceKey is not a valid JWT (missing 2 dots). Length: " + 
+            throw new IllegalStateException("kayaan.supabase.service-key is not a valid JWT (missing 2 dots). Length: " + 
                 (serviceKey == null ? "null" : serviceKey.length()) + 
                 ", Dot count: " + (serviceKey == null ? "null" : serviceKey.chars().filter(ch -> ch=='.').count()));
         }
@@ -74,8 +76,9 @@ public StorageService.SignedUrl createSignedUploadUrl(String bucket, String path
 
         String url = supabaseUrl + "/storage/v1/object/upload/sign/" + encodedBucket + "/" + encodedObject;
 
+        String normalizedContentType = (contentType == null || contentType.isBlank()) ? "application/octet-stream" : contentType;
         Map<String, Object> body = Map.of(
-            "contentType", (contentType == null || contentType.isBlank()) ? "application/octet-stream" : contentType,
+            "contentType", normalizedContentType,
             "upsert", true
         );
 
@@ -110,6 +113,48 @@ public StorageService.SignedUrl createSignedUploadUrl(String bucket, String path
         throw new RuntimeException("Error creating signed upload URL", e);
     }
 }
+    
+    @Override
+    public StorageService.SignedUrl createSignedGetUrl(String bucket, String path, int expiresInSeconds) {
+        try {
+            String object = path;
+            if (object.startsWith("/")) object = object.substring(1);
+            if (object.startsWith(bucket + "/")) object = object.substring((bucket + "/").length());
+            object = object.replaceAll("/{2,}", "/");
+
+            String encodedObject = java.util.Arrays.stream(object.split("/"))
+                .map(s -> java.net.URLEncoder.encode(s, java.nio.charset.StandardCharsets.UTF_8))
+                .collect(java.util.stream.Collectors.joining("/"));
+            String encodedBucket = java.net.URLEncoder.encode(bucket, java.nio.charset.StandardCharsets.UTF_8);
+
+            String url = supabaseUrl + "/storage/v1/object/sign/" + encodedBucket + "/" + encodedObject;
+
+            Map<String, Object> body = Map.of(
+                "expiresIn", Math.max(60, expiresInSeconds)
+            );
+
+            HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+                .header("Authorization", "Bearer " + serviceKey.trim())
+                .header("apikey", serviceKey.trim())
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body)))
+                .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() / 100 != 2) {
+                throw new RuntimeException("Sign GET failed: " + response.statusCode() + " " + response.body());
+            }
+
+            SignedUrlResponse r = objectMapper.readValue(response.body(), SignedUrlResponse.class);
+            String signed = r.signedUrl != null ? r.signedUrl : (r.signedURL != null ? r.signedURL : r.url);
+            if (signed == null) throw new RuntimeException("No signed GET URL in response");
+            if (signed.startsWith("/")) signed = supabaseUrl + "/storage/v1" + signed;
+
+            return new StorageService.SignedUrl(signed, object, expiresInSeconds);
+        } catch (Exception e) {
+            throw new RuntimeException("Error creating signed GET URL", e);
+        }
+    }
     
     @Override
     public String getPublicUrl(String bucket, String path) {

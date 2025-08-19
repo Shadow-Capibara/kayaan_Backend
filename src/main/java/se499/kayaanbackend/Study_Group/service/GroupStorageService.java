@@ -15,5 +15,15 @@ public interface GroupStorageService {
     /**
      * Response DTO for signed upload URL
      */
-    record UploadUrlResponse(String uploadUrl, String fileUrl) {}
+    record UploadUrlResponse(String uploadUrl, String storagePath, String fileUrl) {}
+
+    /**
+     * Build public URL for an object path (when bucket is public)
+     */
+    String getPublicFileUrl(String objectPath);
+
+    /**
+     * Create short-lived signed GET URL for an object path (for private bucket preview)
+     */
+    String createSignedGetUrl(String objectPath, int expiresInSeconds);
 }

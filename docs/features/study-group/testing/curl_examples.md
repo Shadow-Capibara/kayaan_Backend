@@ -94,15 +94,15 @@ curl -X PATCH $BASE_URL/api/groups/1/members/456 \
 
 ## 8. File Upload Flow
 
-### 8.1 Initialize Upload
+### 8.1 Initialize Upload (รองรับ .json)
 ```bash
 curl -X POST $BASE_URL/api/groups/1/resources/upload-url \
   -H "Authorization: $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "fileName": "lecture-notes.pdf",
-    "mimeType": "application/pdf",
-    "size": 1048576
+    "fileName": "flashcard.json",
+    "contentType": "application/json; charset=UTF-8",
+    "size": 2048
   }'
 ```
 
@@ -110,7 +110,8 @@ curl -X POST $BASE_URL/api/groups/1/resources/upload-url \
 ```json
 {
   "uploadUrl": "https://storage.supabase.co/...",
-  "fileUrl": "https://storage.supabase.co/..."
+  "storagePath": "groups/1/2025/08/uuid-flashcard.json",
+  "fileUrl": "https://storage.supabase.co/object/public/library/groups/1/2025/08/uuid-flashcard.json"
 }
 ```
 
@@ -121,17 +122,18 @@ curl -X PUT "UPLOAD_URL_FROM_STEP_8.1" \
   --data-binary @lecture-notes.pdf
 ```
 
-### 8.3 Complete Upload
+### 8.3 Complete Upload (บันทึกเมตาดาต้า JSON)
 ```bash
 curl -X POST $BASE_URL/api/groups/1/resources \
   -H "Authorization: $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "fileName": "lecture-notes.pdf",
-    "fileUrl": "FILE_URL_FROM_STEP_8.1",
-    "title": "Week 1 Lecture Notes",
-    "description": "Introduction to Software Engineering",
-    "tags": ["lecture", "week1", "introduction"]
+    "title": "Flashcards: Sorting",
+    "type": "flashcard",
+    "preview": "{\"cards\": 20}",
+    "stats": "{\"correctRate\": 0.85}",
+    "storagePath": "groups/1/2025/08/uuid-flashcard.json",
+    "mimeType": "application/json"
   }'
 ```
 
@@ -145,16 +147,22 @@ curl -H "Authorization: $TOKEN" $BASE_URL/api/groups/1/resources
 [
   {
     "id": 1,
-    "title": "Week 1 Lecture Notes",
-    "description": "Introduction to Software Engineering",
+    "title": "Flashcards: Sorting",
+    "type": "flashcard",
+    "preview": "{\"cards\":20}",
     "fileUrl": "https://storage.supabase.co/...",
-    "mimeType": "application/pdf",
-    "fileSize": 1048576,
-    "tags": ["lecture", "week1", "introduction"],
+    "storagePath": "groups/1/2025/08/uuid-flashcard.json",
+    "mimeType": "application/json",
+    "stats": "{\"correctRate\":0.85}",
     "uploaderId": 123,
     "createdAt": "2024-01-15T10:35:00"
   }
 ]
+```
+
+### 8.4 Private bucket preview URL
+```bash
+curl -H "Authorization: $TOKEN" $BASE_URL/api/groups/1/contents/1/preview-url
 ```
 
 ## 10. Leave Group

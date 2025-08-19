@@ -28,4 +28,9 @@ public interface GroupContentService {
      * Deletes a resource
      */
     void deleteResource(Integer currentUserId, Integer groupId, Long resourceId);
+
+    /**
+     * Create short-lived preview URL for private buckets
+     */
+    String getPreviewUrl(Integer currentUserId, Integer groupId, Long resourceId);
 }

@@ -4,11 +4,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.web.server.ResponseStatusException;
 
 import lombok.RequiredArgsConstructor;
 import se499.kayaanbackend.Study_Group.GroupContent;
@@ -28,13 +27,13 @@ public class GroupContentServiceImpl implements GroupContentService {
     private final GroupContentRepository groupContentRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final GroupStorageService groupStorageService;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    // no-op
     
     @Override
     public List<ResourceResponse> listResources(Integer currentUserId, Integer groupId) {
         // Check if user is a member
         if (!groupMemberRepository.existsByGroupIdAndUserId(groupId, currentUserId)) {
-            throw new RuntimeException("Access denied: User is not a member of this group");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: User is not a member of this group");
         }
         
         List<GroupContent> resources = groupContentRepository.findByGroupIdOrderByCreatedAtDesc(groupId);
@@ -44,51 +43,75 @@ public class GroupContentServiceImpl implements GroupContentService {
                 .collect(Collectors.toList());
     }
     
+    private String toJson(Object data) {
+        try {
+            return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(data);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid JSON payload");
+        }
+    }
+
     @Override
     public UploadResourceInitResponse initUpload(Integer currentUserId, Integer groupId, UploadResourceInitRequest request) {
         // Check if user is a member
         if (!groupMemberRepository.existsByGroupIdAndUserId(groupId, currentUserId)) {
-            throw new RuntimeException("Access denied: User is not a member of this group");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: User is not a member of this group");
         }
         
-        // Validate file size (e.g., max 100MB)
-        if (request.size() > 100 * 1024 * 1024) {
-            throw new RuntimeException("File size too large. Maximum allowed: 100MB");
+        // Validate file size (≤ 5MB for JSON; others can be larger if needed)
+        String normalizedMime = ResourceValidationUtil.normalizeContentType(request.mimeType());
+        if ("application/octet-stream".equals(normalizedMime)) {
+            normalizedMime = ResourceValidationUtil.detectMimeTypeFromFileName(request.fileName());
+        }
+        Long sizeObj = request.size();
+        long size = sizeObj != null ? sizeObj : 0L;
+        if ("application/json".equals(normalizedMime) && size > 5L * 1024 * 1024) {
+            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "JSON file too large. Maximum allowed: 5MB");
+        }
+        if (!ResourceValidationUtil.isAllowedMimeType(normalizedMime)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid file type");
         }
         
-        // Validate MIME type (basic check)
-        if (!isValidMimeType(request.mimeType())) {
-            throw new RuntimeException("Invalid file type");
-        }
-        
+        long start = System.nanoTime();
         GroupStorageService.UploadUrlResponse uploadResponse = groupStorageService.createSignedUploadUrl(
-                groupId, request.fileName(), request.mimeType(), request.size()
+                groupId, request.fileName(), normalizedMime, size
         );
+        long latencyMs = (System.nanoTime() - start) / 1_000_000;
+        System.out.println("study-group:init-upload groupId=" + groupId + " userId=" + currentUserId +
+                " storagePath=" + uploadResponse.storagePath() + " mime=" + normalizedMime + " size=" + size +
+                " latencyMs=" + latencyMs);
         
-        return new UploadResourceInitResponse(uploadResponse.uploadUrl(), uploadResponse.fileUrl());
+        return new UploadResourceInitResponse(uploadResponse.uploadUrl(), uploadResponse.storagePath(), uploadResponse.fileUrl());
     }
     
     @Override
     public ResourceResponse completeUpload(Integer currentUserId, Integer groupId, UploadResourceCompleteRequest request) {
         // Check if user is a member
         if (!groupMemberRepository.existsByGroupIdAndUserId(groupId, currentUserId)) {
-            throw new RuntimeException("Access denied: User is not a member of this group");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: User is not a member of this group");
         }
         
         GroupContent content = GroupContent.builder()
                 .groupId(groupId)
                 .uploaderId(currentUserId)
                 .title(request.title())
-                .description(request.description())
-                .fileName(request.fileName())
-                .fileUrl(request.fileUrl())
-                .mimeType(getMimeTypeFromFileName(request.fileName()))
-                .fileSize(0L) // TODO: Get actual file size from storage
-                .tags(serializeTags(request.tags()))
+                .type(request.type())
+                .preview(request.preview() != null ? toJson(request.preview()) : null)
+                .storagePath(request.storagePath())
+                .fileName(extractFileName(request.storagePath()))
+                .fileUrl(buildPublicUrlIfAny(request.storagePath()))
+                .mimeType(ResourceValidationUtil.normalizeContentType(request.mimeType()))
+                .fileSize(0L)
+                .stats(request.stats() != null ? toJson(request.stats()) : null)
                 .createdAt(LocalDateTime.now())
                 .build();
         
+        long saveStart = System.nanoTime();
         GroupContent savedContent = groupContentRepository.save(content);
+        long saveLatencyMs = (System.nanoTime() - saveStart) / 1_000_000;
+        System.out.println("study-group:complete-upload groupId=" + groupId + " userId=" + currentUserId +
+                " storagePath=" + content.getStoragePath() + " mime=" + content.getMimeType() +
+                " latencyMs=" + saveLatencyMs);
         
         return mapToResponse(savedContent);
     }
@@ -97,19 +120,19 @@ public class GroupContentServiceImpl implements GroupContentService {
     public void deleteResource(Integer currentUserId, Integer groupId, Long resourceId) {
         // Check if user is a member
         if (!groupMemberRepository.existsByGroupIdAndUserId(groupId, currentUserId)) {
-            throw new RuntimeException("Access denied: User is not a member of this group");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: User is not a member of this group");
         }
         
         GroupContent content = groupContentRepository.findById(resourceId)
-                .orElseThrow(() -> new RuntimeException("Resource not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Resource not found"));
         
         // Check if user is the uploader or has moderator/owner role
         GroupMember member = groupMemberRepository.findByGroupIdAndUserId(groupId, currentUserId)
-                .orElseThrow(() -> new RuntimeException("User is not a member of this group"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not a member of this group"));
         
         if (!content.getUploaderId().equals(currentUserId) && 
             member.getRole() == GroupMember.Role.member) {
-            throw new RuntimeException("Access denied: Only uploaders, moderators, and owners can delete resources");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: Only uploaders, moderators, and owners can delete resources");
         }
         
         groupContentRepository.delete(content);
@@ -119,60 +142,44 @@ public class GroupContentServiceImpl implements GroupContentService {
         return new ResourceResponse(
                 content.getId(),
                 content.getTitle(),
-                content.getDescription(),
+                content.getType(),
+                content.getPreview(),
                 content.getFileUrl(),
+                content.getStoragePath(),
                 content.getMimeType(),
-                content.getFileSize(),
-                deserializeTags(content.getTags()),
+                content.getStats(),
                 content.getUploaderId(),
                 content.getCreatedAt()
         );
     }
     
-    private boolean isValidMimeType(String mimeType) {
-        // Basic validation - allow common file types
-        return mimeType != null && (
-                mimeType.startsWith("image/") ||
-                mimeType.startsWith("video/") ||
-                mimeType.startsWith("audio/") ||
-                mimeType.startsWith("application/pdf") ||
-                mimeType.startsWith("application/msword") ||
-                mimeType.startsWith("application/vnd.openxmlformats-officedocument") ||
-                mimeType.startsWith("text/")
-        );
-    }
     
-    private String getMimeTypeFromFileName(String fileName) {
-        // Simple MIME type detection based on file extension
-        if (fileName == null) return "application/octet-stream";
-        
-        String lowerFileName = fileName.toLowerCase();
-        if (lowerFileName.endsWith(".pdf")) return "application/pdf";
-        if (lowerFileName.endsWith(".jpg") || lowerFileName.endsWith(".jpeg")) return "image/jpeg";
-        if (lowerFileName.endsWith(".png")) return "image/png";
-        if (lowerFileName.endsWith(".gif")) return "image/gif";
-        if (lowerFileName.endsWith(".mp4")) return "video/mp4";
-        if (lowerFileName.endsWith(".mp3")) return "audio/mpeg";
-        if (lowerFileName.endsWith(".txt")) return "text/plain";
-        if (lowerFileName.endsWith(".doc")) return "application/msword";
-        if (lowerFileName.endsWith(".docx")) return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-        
-        return "application/octet-stream";
+    private String buildPublicUrlIfAny(String storagePath) {
+        if (storagePath == null) return null;
+        return groupStorageService.getPublicFileUrl(storagePath);
     }
-    
-    private String serializeTags(List<String> tags) {
-        try {
-            return objectMapper.writeValueAsString(tags);
-        } catch (JsonProcessingException e) {
-            return "[]";
+
+    private String extractFileName(String storagePath) {
+        if (storagePath == null) return null;
+        int i = storagePath.lastIndexOf('/');
+        return i >= 0 ? storagePath.substring(i + 1) : storagePath;
+    }
+
+    @Override
+    public String getPreviewUrl(Integer currentUserId, Integer groupId, Long resourceId) {
+        if (!groupMemberRepository.existsByGroupIdAndUserId(groupId, currentUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: User is not a member of this group");
         }
-    }
-    
-    private List<String> deserializeTags(String tagsJson) {
-        try {
-            return objectMapper.readValue(tagsJson, List.class);
-        } catch (JsonProcessingException e) {
-            return List.of();
+        GroupContent content = groupContentRepository.findById(resourceId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Resource not found"));
+        if (content.getStoragePath() == null) {
+            return content.getFileUrl();
         }
+        long t0 = System.nanoTime();
+        String url = groupStorageService.createSignedGetUrl(content.getStoragePath(), 300);
+        long t1 = (System.nanoTime() - t0) / 1_000_000;
+        System.out.println("study-group:preview-url groupId=" + groupId + " userId=" + currentUserId +
+                " storagePath=" + content.getStoragePath() + " latencyMs=" + t1);
+        return url;
     }
 }

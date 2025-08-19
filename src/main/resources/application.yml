@@ -1,71 +1,50 @@
 spring:
-  profiles:
-    active:
-      - db
   application:
     name: Kayaan-Backend
+  profiles:
+    active: dev
   servlet:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
-  datasource:
-    url: jdbc:mysql://localhost:3307/kayaan_db?createDatabaseIfNotExist=true&autoReconnect=true&characterEncoding=UTF-8&allowMultiQueries=true&allowPublicKeyRetrieval=true&useSSL=false&useUnicode=true
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: password
-  jpa:
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
-        format_sql: true
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
-    baseline-on-migrate: true
 
 # Error handling configuration
 server:
   error:
-    include-message: always
-    include-binding-errors: always
+    include-message: never
+    include-binding-errors: never
     include-stacktrace: never
 
-# Logging configuration for debugging
+# Logging configuration (base defaults; override per profile)
 logging:
   level:
-    org.springframework.web: DEBUG
-    org.springframework.validation: DEBUG
-    org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping: TRACE
-    org.springframework.security: DEBUG
-    se499.kayaanbackend.controller.AvatarController: DEBUG
+    org.springframework.web: INFO
+    org.springframework.security: INFO
 
 application:
   security:
     jwt:
-      secret-key: 5274a74a32284bf55ed941fdb26517b050c020a43cb0cc66a9d207ac4f26ca644ea3b5fd011cffec733481bf3e68184611f9d7fc2b4a05bb59dff54ffc53ee0ce09883704b4bdd8bed98bdb0ab3bf78354915abb48914f06355cd3852d82b6d5cfe35d8246a7a258783b74ea1caebf84aa97b6bedcffbec428bc2b11edb4c9c83c1c3a3ace234ee74969a363968396d2cd139ca4cb1bbd37cd2d659a041f17a709725b9cfaa899f009d5f9887a6339eed6a17ebd5b922e65779aa22a0036c2a5d9a2c781f6ddd4b71c085b41801b33740aec3f92473f876a091cc4f8369fc34712924a8eeddffc2ba0bbc3a8bab1975409a3628cbd4593efee648591a71ff5dd
+      secret-key: ${APPLICATION_SECURITY_JWT_SECRET_KEY:${JWT_SECRET}}
       expiration: 86400000
       refresh-token:
         expiration: 604800000
 
-supabase:
-  url: ${SUPABASE_URL:https://ljapyahphaohoanshamz.supabase.co}
-  serviceKey: ${SUPABASE_SERVICE_KEY:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqYXB5YWhwaGFvaG9hbnNoYW16Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDgxNTU1MSwiZXhwIjoyMDcwMzkxNTUxfQ.QexhYWtuHU3zqIZy7AjrgZf0Po_FcOpTzMlxXtG0NKI}
-
 kayaan:
-   supabase:
-    url: ${SUPABASE_URL:https://ljapyahphaohoanshamz.supabase.co}
-    
-    service-key: ${SUPABASE_SERVICE_KEY:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqYXB5YWhwaGFvaG9hbnNoYW16Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDgxNTU1MSwiZXhwIjoyMDcwMzkxNTUxfQ.QexhYWtuHU3zqIZy7AjrgZf0Po_FcOpTzMlxXtG0NKI}
+  supabase:
+    url: ${SUPABASE_URL}
+    service-key: ${SUPABASE_SERVICE_KEY}
     buckets:
       avatars: ${SUPABASE_BUCKET_AVATARS:avatars}
       ai: ${SUPABASE_BUCKET_AI:ai-outputs}
-      library: ${SUPABASE_BUCKET_LIBRARY:library}
+      library: ${SUPABASE_BUCKET_STUDY_CONTENT:${SUPABASE_BUCKET_LIBRARY:study-content}}
     realtime:
       enabled: false
       groupChannelPrefix: groups.
+    signed-get-ttl: ${SIGNED_GET_TTL:300}
+    signed-get-skew-sec: ${SIGNED_GET_SKEW_SEC:10}
+
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
 
 avatar:
   upload-dir: ${user.dir}/uploads/avatars

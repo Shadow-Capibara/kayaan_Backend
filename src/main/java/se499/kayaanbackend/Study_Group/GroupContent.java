@@ -35,14 +35,23 @@ public class GroupContent {
     @Column(nullable = false)
     private String title;
     
+    @Column(name = "type")
+    private String type; // note | quiz | flashcard
+    
     @Column(columnDefinition = "TEXT")
     private String description;
+    
+    @Column(name = "preview", columnDefinition = "TEXT")
+    private String preview;
     
     @Column(name = "file_name", nullable = false)
     private String fileName;
     
-    @Column(name = "file_url", nullable = false)
+    @Column(name = "file_url")
     private String fileUrl;
+    
+    @Column(name = "storage_path")
+    private String storagePath;
     
     @Column(name = "mime_type", nullable = false)
     private String mimeType;
@@ -53,6 +62,12 @@ public class GroupContent {
     @Column(columnDefinition = "JSON")
     private String tags;
     
+    @Column(name = "stats", columnDefinition = "JSON")
+    private String stats;
+    
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+    
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }
