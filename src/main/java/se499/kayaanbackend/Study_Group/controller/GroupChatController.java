@@ -7,28 +7,29 @@ import org.springframework.stereotype.Controller;
 
 import lombok.RequiredArgsConstructor;
 import se499.kayaanbackend.Study_Group.dto.MessageResponse;
-import se499.kayaanbackend.Study_Group.service.GroupMessageServiceImpl;
+import se499.kayaanbackend.Study_Group.dto.MessageRequest;
+import se499.kayaanbackend.Study_Group.service.GroupMessageService;
 
 @Controller
 @RequiredArgsConstructor
 public class GroupChatController {
-    private final GroupMessageServiceImpl groupMessageService;
+    private final GroupMessageService groupMessageService;
 
     @MessageMapping("/groups/{groupId}/chat")
     @SendTo("/topic/groups/{groupId}")
-    public MessageResponse sendMessage(@Payload MessageRequest request) {
+    public MessageResponse sendMessage(@Payload IncomingMessage request) {
         try {
             // Extract groupId from the path variable (you might need to adjust this based on your WebSocket setup)
             Integer groupId = extractGroupIdFromContext();
             Integer userId = extractUserIdFromContext();
             
-            return groupMessageService.saveAndReturnResponse(groupId, userId, request.content());
+            return groupMessageService.sendMessage(userId, groupId, new MessageRequest(request.content(), "text"));
         } catch (Exception e) {
             throw new RuntimeException("Failed to save message", e);
         }
     }
 
-    public record MessageRequest(String content) {}
+    public record IncomingMessage(String content) {}
     
     // TODO: Implement these methods based on your WebSocket context setup
     private Integer extractGroupIdFromContext() {

@@ -31,7 +31,7 @@ public class GroupSecurityConfig {
     public SecurityFilterChain groupSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .cors(cors -> cors.configurationSource(groupCorsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints
                 .requestMatchers("/api/auth/**").permitAll()
@@ -58,8 +58,8 @@ public class GroupSecurityConfig {
         return http.build();
     }
     
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+    @Bean(name = "groupCorsConfigurationSource")
+    public CorsConfigurationSource groupCorsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
         // อนุญาต origin จาก frontend

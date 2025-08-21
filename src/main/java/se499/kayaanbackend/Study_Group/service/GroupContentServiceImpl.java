@@ -138,6 +138,7 @@ public class GroupContentServiceImpl implements GroupContentService {
     /**
      * Updates a resource
      */
+    @Override
     public ResourceResponse updateResource(Integer currentUserId, Integer groupId, Long resourceId, 
                                  String title, String description, List<String> tags) {
         // Check if user is a member

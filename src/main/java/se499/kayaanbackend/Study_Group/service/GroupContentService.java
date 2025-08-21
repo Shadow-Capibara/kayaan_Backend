@@ -28,4 +28,10 @@ public interface GroupContentService {
      * Deletes a resource
      */
     void deleteResource(Integer currentUserId, Integer groupId, Long resourceId);
+
+    /**
+     * Updates a resource's metadata
+     */
+    ResourceResponse updateResource(Integer currentUserId, Integer groupId, Long resourceId,
+            String title, String description, List<String> tags);
 }
