@@ -44,4 +44,21 @@ public class GroupInvite {
     @Column(nullable = false)
     @Builder.Default
     private Boolean revoked = false;
+    
+    @Column(name = "max_uses")
+    private Integer maxUses;
+    
+    @Column(name = "current_uses")
+    @Builder.Default
+    private Integer currentUses = 0;
+    
+    @Column(name = "created_by_ip")
+    private String createdByIp;
+    
+    @Column(name = "is_active")
+    @Builder.Default
+    private Boolean isActive = true;
+    
+    @Column(name = "invite_code", unique = true)
+    private String inviteCode;
 }

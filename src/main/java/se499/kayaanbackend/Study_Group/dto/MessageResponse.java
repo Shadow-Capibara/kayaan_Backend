@@ -4,7 +4,11 @@ import java.time.LocalDateTime;
 
 public record MessageResponse(
     Long id,
-    Integer senderId,
+    Integer groupId,
+    Integer userId,
+    String userName,
     String content,
-    LocalDateTime createdAt
+    String messageType,
+    LocalDateTime createdAt,
+    LocalDateTime updatedAt
 ) {}

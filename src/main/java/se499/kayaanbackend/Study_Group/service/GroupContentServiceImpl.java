@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,16 +29,29 @@ public class GroupContentServiceImpl implements GroupContentService {
     private final GroupContentRepository groupContentRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final GroupStorageService groupStorageService;
+    private final GroupNotificationService notificationService;
     private final ObjectMapper objectMapper = new ObjectMapper();
     
     @Override
-    public List<ResourceResponse> listResources(Integer currentUserId, Integer groupId) {
+    public List<ResourceResponse> listResources(Integer currentUserId, Integer groupId, String search, String type, int page, int size) {
         // Check if user is a member
         if (!groupMemberRepository.existsByGroupIdAndUserId(groupId, currentUserId)) {
             throw new RuntimeException("Access denied: User is not a member of this group");
         }
         
-        List<GroupContent> resources = groupContentRepository.findByGroupIdOrderByCreatedAtDesc(groupId);
+        List<GroupContent> resources;
+        
+        if (search != null && !search.trim().isEmpty()) {
+            // Search by title, description, or tags
+            resources = groupContentRepository.findByGroupIdAndSearchTerm(groupId, search.trim());
+        } else if (type != null && !type.trim().isEmpty()) {
+            // Filter by MIME type
+            resources = groupContentRepository.findByGroupIdAndMimeTypeContaining(groupId, type.trim());
+        } else {
+            // Get all resources with pagination
+            PageRequest pageRequest = PageRequest.of(page, size);
+            resources = groupContentRepository.findByGroupIdOrderByCreatedAtDesc(groupId, pageRequest);
+        }
         
         return resources.stream()
                 .map(this::mapToResponse)
@@ -90,6 +104,9 @@ public class GroupContentServiceImpl implements GroupContentService {
         
         GroupContent savedContent = groupContentRepository.save(content);
         
+        // Notify group members about new content
+        notificationService.notifyContentUpdate(groupId, currentUserId, "new resource");
+        
         return mapToResponse(savedContent);
     }
     
@@ -113,6 +130,44 @@ public class GroupContentServiceImpl implements GroupContentService {
         }
         
         groupContentRepository.delete(content);
+        
+        // Notify about content deletion
+        notificationService.notifyContentUpdate(groupId, currentUserId, "resource deletion");
+    }
+    
+    /**
+     * Updates a resource
+     */
+    public ResourceResponse updateResource(Integer currentUserId, Integer groupId, Long resourceId, 
+                                 String title, String description, List<String> tags) {
+        // Check if user is a member
+        if (!groupMemberRepository.existsByGroupIdAndUserId(groupId, currentUserId)) {
+            throw new RuntimeException("Access denied: User is not a member of this group");
+        }
+
+        GroupContent content = groupContentRepository.findById(resourceId)
+                .orElseThrow(() -> new RuntimeException("Resource not found"));
+
+        // Check if user is the uploader or has moderator/owner role
+        GroupMember member = groupMemberRepository.findByGroupIdAndUserId(groupId, currentUserId)
+                .orElseThrow(() -> new RuntimeException("User is not a member of this group"));
+
+        if (!content.getUploaderId().equals(currentUserId) && 
+            member.getRole() == GroupMember.Role.member) {
+            throw new RuntimeException("Access denied: Only uploaders, moderators, and owners can update resources");
+        }
+
+        content.setTitle(title);
+        content.setDescription(description);
+        content.setTags(serializeTags(tags));
+        content.setUpdatedAt(LocalDateTime.now());
+
+        GroupContent updatedContent = groupContentRepository.save(content);
+        
+        // Notify about content update
+        notificationService.notifyContentUpdate(groupId, currentUserId, "resource update");
+        
+        return mapToResponse(updatedContent);
     }
     
     private ResourceResponse mapToResponse(GroupContent content) {

@@ -22,9 +22,10 @@ public class GroupMemberServiceImpl implements GroupMemberService {
     private final GroupMemberRepository groupMemberRepository;
     private final StudyGroupRepository studyGroupRepository;
     private final UserRepository userRepository;
+    private final GroupNotificationService notificationService;
     
     @Override
-    public List<MemberResponse> getMembers(Integer currentUserId, Integer groupId) {
+    public List<MemberResponse> getGroupMembers(Integer currentUserId, Integer groupId) {
         // Check if user is a member
         if (!groupMemberRepository.existsByGroupIdAndUserId(groupId, currentUserId)) {
             throw new RuntimeException("Access denied: User is not a member of this group");
@@ -38,13 +39,13 @@ public class GroupMemberServiceImpl implements GroupMemberService {
     }
     
     @Override
-    public MemberResponse updateRole(Integer currentUserId, Integer groupId, Integer userId, UpdateMemberRoleRequest request) {
+    public MemberResponse updateMemberRole(Integer currentUserId, Integer groupId, Integer memberId, UpdateMemberRoleRequest request) {
         // Check if current user is a member
         GroupMember currentMember = groupMemberRepository.findByGroupIdAndUserId(groupId, currentUserId)
                 .orElseThrow(() -> new RuntimeException("Access denied: User is not a member of this group"));
         
         // Check if target user is a member
-        GroupMember targetMember = groupMemberRepository.findByGroupIdAndUserId(groupId, userId)
+        GroupMember targetMember = groupMemberRepository.findByGroupIdAndUserId(groupId, memberId)
                 .orElseThrow(() -> new RuntimeException("Target user is not a member of this group"));
         
         // Check permissions
@@ -71,17 +72,20 @@ public class GroupMemberServiceImpl implements GroupMemberService {
         targetMember.setRole(request.role());
         GroupMember updatedMember = groupMemberRepository.save(targetMember);
         
+        // Notify about role change
+        notificationService.notifyContentUpdate(groupId, currentUserId, "role update");
+        
         return mapToResponse(updatedMember);
     }
     
     @Override
-    public void removeMember(Integer currentUserId, Integer groupId, Integer userId) {
+    public void removeMember(Integer currentUserId, Integer groupId, Integer memberId) {
         // Check if current user is a member
         GroupMember currentMember = groupMemberRepository.findByGroupIdAndUserId(groupId, currentUserId)
                 .orElseThrow(() -> new RuntimeException("Access denied: User is not a member of this group"));
         
         // Check if target user is a member
-        GroupMember targetMember = groupMemberRepository.findByGroupIdAndUserId(groupId, userId)
+        GroupMember targetMember = groupMemberRepository.findByGroupIdAndUserId(groupId, memberId)
                 .orElseThrow(() -> new RuntimeException("Target user is not a member of this group"));
         
         // Check permissions
@@ -97,11 +101,14 @@ public class GroupMemberServiceImpl implements GroupMemberService {
         }
         
         // Owners cannot remove themselves
-        if (currentUserId.equals(userId)) {
+        if (currentUserId.equals(memberId)) {
             throw new RuntimeException("Access denied: Users cannot remove themselves");
         }
         
         groupMemberRepository.delete(targetMember);
+        
+        // Notify about member removal
+        notificationService.notifyMemberLeft(groupId, memberId);
     }
     
     @Override

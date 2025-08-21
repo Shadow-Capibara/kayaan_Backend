@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
@@ -49,31 +50,55 @@ public class StudyGroupController {
     
     @PostMapping("/join")
     public ResponseEntity<StudyGroupResponse> joinByToken(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal User currentUser,
             @RequestBody JoinByTokenRequest request) {
-        return ResponseEntity.ok(studyGroupService.joinByToken(user.getId(), request.token()));
+        return ResponseEntity.ok(studyGroupService.joinByToken(currentUser.getId(), request.token()));
+    }
+    
+    @GetMapping("/invite/{token}/validate")
+    public ResponseEntity<InviteResponse> validateInviteToken(
+            @PathVariable String token) {
+        return ResponseEntity.ok(studyGroupService.validateInviteToken(token));
     }
     
     @PostMapping("/{groupId}/leave")
     public ResponseEntity<Void> leaveGroup(
-            @AuthenticationPrincipal User user,
-            @PathVariable Integer groupId) {
-        studyGroupService.leaveGroup(user.getId(), groupId);
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Integer groupId,
+            @RequestParam(defaultValue = "false") boolean confirm) {
+        
+        if (!confirm) {
+            throw new RuntimeException("Please confirm leaving by setting confirm=true");
+        }
+        
+        studyGroupService.leaveGroup(currentUser.getId(), groupId);
         return ResponseEntity.ok().build();
     }
     
     @DeleteMapping("/{groupId}")
     public ResponseEntity<Void> deleteGroup(
-            @AuthenticationPrincipal User user,
-            @PathVariable Integer groupId) {
-        studyGroupService.deleteGroup(user.getId(), groupId);
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Integer groupId,
+            @RequestParam(defaultValue = "false") boolean confirm) {
+        
+        if (!confirm) {
+            throw new RuntimeException("Please confirm deletion by setting confirm=true");
+        }
+        
+        studyGroupService.deleteGroup(currentUser.getId(), groupId);
         return ResponseEntity.ok().build();
     }
     
     @PostMapping("/{groupId}/invites")
     public ResponseEntity<InviteResponse> generateInvite(
-            @AuthenticationPrincipal User user,
-            @PathVariable Integer groupId) {
-        return ResponseEntity.ok(studyGroupService.generateInvite(user.getId(), groupId));
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Integer groupId,
+            @RequestParam(defaultValue = "7") int expiryDays) {
+        
+        if (expiryDays < 1 || expiryDays > 30) {
+            throw new RuntimeException("Expiry days must be between 1 and 30");
+        }
+        
+        return ResponseEntity.ok(studyGroupService.generateInvite(currentUser.getId(), groupId, expiryDays));
     }
 }

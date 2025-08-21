@@ -10,9 +10,9 @@ import se499.kayaanbackend.Study_Group.dto.UploadResourceInitResponse;
 public interface GroupContentService {
     
     /**
-     * Lists all resources in a group
+     * Lists all resources in a group with search and filtering
      */
-    List<ResourceResponse> listResources(Integer currentUserId, Integer groupId);
+    List<ResourceResponse> listResources(Integer currentUserId, Integer groupId, String search, String type, int page, int size);
     
     /**
      * Initializes an upload by creating a signed URL

@@ -44,5 +44,10 @@ public interface StudyGroupService {
     /**
      * Generates an invite token for a group
      */
-    InviteResponse generateInvite(Integer currentUserId, Integer groupId);
+    InviteResponse generateInvite(Integer currentUserId, Integer groupId, int expiryDays);
+    
+    /**
+     * Validates an invite token without joining
+     */
+    InviteResponse validateInviteToken(String token);
 }

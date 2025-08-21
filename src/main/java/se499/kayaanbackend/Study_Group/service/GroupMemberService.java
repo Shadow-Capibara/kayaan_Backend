@@ -10,12 +10,12 @@ public interface GroupMemberService {
     /**
      * Gets all members of a group
      */
-    List<MemberResponse> getMembers(Integer currentUserId, Integer groupId);
+    List<MemberResponse> getGroupMembers(Integer currentUserId, Integer groupId);
     
     /**
      * Updates a member's role (owner/moderator only)
      */
-    MemberResponse updateRole(Integer currentUserId, Integer groupId, Integer userId, UpdateMemberRoleRequest request);
+    MemberResponse updateMemberRole(Integer currentUserId, Integer groupId, Integer memberId, UpdateMemberRoleRequest request);
     
     /**
      * Removes a member from the group

@@ -20,6 +20,7 @@ import se499.kayaanbackend.Study_Group.repository.GroupMemberRepository;
 import se499.kayaanbackend.Study_Group.repository.StudyGroupRepository;
 import se499.kayaanbackend.security.user.User;
 import se499.kayaanbackend.security.user.UserRepository;
+import se499.kayaanbackend.Study_Group.service.GroupNotificationService;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +31,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
     private final GroupMemberRepository groupMemberRepository;
     private final GroupInviteRepository groupInviteRepository;
     private final UserRepository userRepository;
+    private final GroupNotificationService notificationService;
     
     @Override
     @Transactional
@@ -94,6 +96,11 @@ public class StudyGroupServiceImpl implements StudyGroupService {
             throw new RuntimeException("User is already a member of this group");
         }
         
+        // Check if user has a pending invitation
+        if (groupInviteRepository.existsByGroupIdAndCreatedByAndRevokedFalse(invite.getGroupId(), currentUserId)) {
+            throw new RuntimeException("User already has a pending invitation to this group");
+        }
+        
         // Add user as member
         GroupMember member = GroupMember.builder()
                 .groupId(invite.getGroupId())
@@ -103,6 +110,9 @@ public class StudyGroupServiceImpl implements StudyGroupService {
                 .build();
         
         groupMemberRepository.save(member);
+        
+        // Notify about new member joining
+        notificationService.notifyMemberJoined(invite.getGroupId(), currentUserId);
         
         StudyGroup group = studyGroupRepository.findById(invite.getGroupId())
                 .orElseThrow(() -> new RuntimeException("Group not found"));
@@ -125,6 +135,9 @@ public class StudyGroupServiceImpl implements StudyGroupService {
         }
         
         groupMemberRepository.delete(membership);
+        
+        // Notify about member leaving
+        notificationService.notifyMemberLeft(groupId, currentUserId);
     }
     
     @Override
@@ -140,14 +153,14 @@ public class StudyGroupServiceImpl implements StudyGroupService {
     }
     
     @Override
-    public InviteResponse generateInvite(Integer currentUserId, Integer groupId) {
+    public InviteResponse generateInvite(Integer currentUserId, Integer groupId, int expiryDays) {
         // Check if user is a member
         if (!groupMemberRepository.existsByGroupIdAndUserId(groupId, currentUserId)) {
             throw new RuntimeException("Access denied: User is not a member of this group");
         }
         
         String token = UUID.randomUUID().toString();
-        LocalDateTime expiresAt = LocalDateTime.now().plusDays(7); // 7 days expiry
+        LocalDateTime expiresAt = LocalDateTime.now().plusDays(expiryDays);
         
         GroupInvite invite = GroupInvite.builder()
                 .groupId(groupId)
@@ -161,6 +174,14 @@ public class StudyGroupServiceImpl implements StudyGroupService {
         groupInviteRepository.save(invite);
         
         return new InviteResponse(token, expiresAt);
+    }
+    
+    @Override
+    public InviteResponse validateInviteToken(String token) {
+        GroupInvite invite = groupInviteRepository.findValidByToken(token, LocalDateTime.now())
+                .orElseThrow(() -> new RuntimeException("Invalid or expired invite token"));
+        
+        return new InviteResponse(token, invite.getExpiresAt());
     }
     
     private StudyGroupResponse mapToResponse(StudyGroup group) {
