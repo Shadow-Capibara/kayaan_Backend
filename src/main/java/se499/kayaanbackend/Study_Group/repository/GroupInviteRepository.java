@@ -29,4 +29,19 @@ public interface GroupInviteRepository extends JpaRepository<GroupInvite, Long> 
      * ค้นหารหัสเชิญตาม inviteCode
      */
     Optional<GroupInvite> findByInviteCode(String inviteCode);
+
+    /**
+     * ค้นหารหัสเชิญที่ยังใช้งานได้ตามกลุ่ม
+     */
+    List<GroupInvite> findByGroupIdAndIsActiveTrue(Integer groupId);
+
+    /**
+     * ค้นหารหัสเชิญที่ยังใช้งานได้ตามรหัส
+     */
+    Optional<GroupInvite> findByInviteCodeAndIsActiveTrue(String inviteCode);
+
+    /**
+     * ค้นหารหัสเชิญที่หมดอายุแล้ว
+     */
+    List<GroupInvite> findByExpiresAtBefore(LocalDateTime dateTime);
 }

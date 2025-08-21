@@ -8,8 +8,12 @@ import se499.kayaanbackend.Study_Group.StudyGroup;
 import se499.kayaanbackend.Study_Group.repository.GroupMemberRepository;
 import se499.kayaanbackend.Study_Group.repository.GroupContentRepository;
 import se499.kayaanbackend.Study_Group.repository.StudyGroupRepository;
+import se499.kayaanbackend.Study_Group.security.GroupPermission;
+import se499.kayaanbackend.Study_Group.security.GroupRole;
+import se499.kayaanbackend.Study_Group.security.PermissionIntegrationService;
 
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Service สำหรับจัดการสิทธิ์และตรวจสอบการเข้าถึงในกลุ่มเรียน
@@ -26,18 +30,27 @@ public class GroupPermissionService {
     @Autowired
     private StudyGroupRepository studyGroupRepository;
     
+    @Autowired
+    private PermissionIntegrationService permissionIntegrationService;
+
     /**
      * ตรวจสอบว่าผู้ใช้มีสิทธิ์ทำอะไรในกลุ่ม
      */
     public boolean hasPermission(Long userId, Long groupId, GroupPermission permission) {
-        Optional<GroupMember> memberOpt = groupMemberRepository.findByUserIdAndGroupId(userId, groupId);
+        Optional<GroupMember> memberOpt = groupMemberRepository.findByGroupIdAndUserId(groupId.intValue(), userId.intValue());
         
         if (memberOpt.isEmpty()) {
             return false;
         }
         
         GroupMember member = memberOpt.get();
-        GroupRole role = GroupRole.valueOf(member.getRole());
+        // Convert GroupMember.Role to GroupRole
+        GroupRole role;
+        if (member.getRole() == GroupMember.Role.admin) {
+            role = GroupRole.ADMIN;
+        } else {
+            role = GroupRole.MEMBER;
+        }
         
         return role.hasPermission(permission);
     }
@@ -45,15 +58,20 @@ public class GroupPermissionService {
     /**
      * ตรวจสอบบทบาทของผู้ใช้ในกลุ่ม
      */
-    public GroupRole getUserRole(Long userId, Long groupId) {
-        Optional<GroupMember> memberOpt = groupMemberRepository.findByUserIdAndGroupId(userId, groupId);
+    public GroupRole getUserRole(Long groupId, Long userId) {
+        Optional<GroupMember> memberOpt = groupMemberRepository.findByGroupIdAndUserId(groupId.intValue(), userId.intValue());
         
         if (memberOpt.isEmpty()) {
-            return null;
+            return GroupRole.MEMBER; // Default role
         }
-        
+
         GroupMember member = memberOpt.get();
-        return GroupRole.valueOf(member.getRole());
+        // Convert GroupMember.Role to GroupRole
+        if (member.getRole() == GroupMember.Role.admin) {
+            return GroupRole.ADMIN;
+        } else {
+            return GroupRole.MEMBER;
+        }
     }
     
     /**
@@ -67,7 +85,7 @@ public class GroupPermissionService {
         }
         
         GroupContent content = contentOpt.get();
-        return hasPermission(userId, content.getGroupId(), GroupPermission.VIEW_GROUP);
+        return hasPermission(userId, content.getGroupId().longValue(), GroupPermission.VIEW_GROUP);
     }
     
     /**
@@ -83,12 +101,12 @@ public class GroupPermissionService {
         GroupContent content = contentOpt.get();
         
         // ถ้าเป็นเจ้าของเนื้อหา สามารถแก้ไขได้
-        if (content.getUserId().equals(userId)) {
-            return hasPermission(userId, content.getGroupId(), GroupPermission.EDIT_OWN_CONTENT);
+        if (content.getUploaderId().equals(userId.intValue())) {
+            return hasPermission(userId, content.getGroupId().longValue(), GroupPermission.EDIT_OWN_CONTENT);
         }
         
         // ถ้าไม่ใช่เจ้าของ ต้องมีสิทธิ์แก้ไขเนื้อหาใดๆ
-        return hasPermission(userId, content.getGroupId(), GroupPermission.EDIT_ANY_CONTENT);
+        return hasPermission(userId, content.getGroupId().longValue(), GroupPermission.EDIT_ANY_CONTENT);
     }
     
     /**
@@ -104,12 +122,12 @@ public class GroupPermissionService {
         GroupContent content = contentOpt.get();
         
         // ถ้าเป็นเจ้าของเนื้อหา สามารถลบได้
-        if (content.getUserId().equals(userId)) {
-            return hasPermission(userId, content.getGroupId(), GroupPermission.DELETE_OWN_CONTENT);
+        if (content.getUploaderId().equals(userId.intValue())) {
+            return hasPermission(userId, content.getGroupId().longValue(), GroupPermission.DELETE_OWN_CONTENT);
         }
         
         // ถ้าไม่ใช่เจ้าของ ต้องมีสิทธิ์ลบเนื้อหาใดๆ
-        return hasPermission(userId, content.getGroupId(), GroupPermission.DELETE_ANY_CONTENT);
+        return hasPermission(userId, content.getGroupId().longValue(), GroupPermission.DELETE_ANY_CONTENT);
     }
     
     /**
@@ -137,20 +155,34 @@ public class GroupPermissionService {
      * ตรวจสอบว่าผู้ใช้เป็นเจ้าของกลุ่มหรือไม่
      */
     public boolean isGroupOwner(Long userId, Long groupId) {
-        Optional<StudyGroup> groupOpt = studyGroupRepository.findById(groupId);
+        Optional<StudyGroup> groupOpt = studyGroupRepository.findById(groupId.intValue());
         
         if (groupOpt.isEmpty()) {
             return false;
         }
         
         StudyGroup group = groupOpt.get();
-        return group.getOwnerId().equals(userId);
+        return group.getOwner().getId().equals(userId);
     }
     
     /**
      * ตรวจสอบว่าผู้ใช้เป็นสมาชิกในกลุ่มหรือไม่
      */
     public boolean isGroupMember(Long userId, Long groupId) {
-        return groupMemberRepository.findByUserIdAndGroupId(userId, groupId).isPresent();
+        return groupMemberRepository.findByGroupIdAndUserId(groupId.intValue(), userId.intValue()).isPresent();
+    }
+
+    /**
+     * ตรวจสอบสิทธิ์แบบ hierarchical
+     */
+    public boolean hasHierarchicalPermission(Long groupId, Long userId, GroupPermission permission) {
+        return permissionIntegrationService.hasHierarchicalPermission(groupId, userId, permission);
+    }
+
+    /**
+     * ดึงสิทธิ์ทั้งหมดของผู้ใช้
+     */
+    public Set<GroupPermission> getUserPermissions(Long groupId, Long userId) {
+        return permissionIntegrationService.getUserPermissions(groupId, userId);
     }
 }

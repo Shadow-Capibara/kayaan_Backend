@@ -7,6 +7,7 @@ import se499.kayaanbackend.Study_Group.repository.GroupInviteRepository;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -154,6 +155,43 @@ public class InviteCodeService {
                 .build();
         
         return groupInviteRepository.save(invite);
+    }
+    
+    /**
+     * ดึงรายการรหัสเชิญของกลุ่ม
+     */
+    public List<GroupInvite> getGroupInvites(Long groupId) {
+        return groupInviteRepository.findByGroupId(groupId.intValue());
+    }
+
+    /**
+     * ใช้รหัสเชิญเพื่อเข้าร่วมกลุ่ม
+     */
+    public boolean useInviteCode(String inviteCode, Long userId) {
+        Optional<GroupInvite> inviteOpt = groupInviteRepository.findByInviteCode(inviteCode);
+        if (inviteOpt.isEmpty()) {
+            return false;
+        }
+
+        GroupInvite invite = inviteOpt.get();
+        
+        // ตรวจสอบการหมดอายุ
+        if (isInviteExpired(invite)) {
+            return false;
+        }
+
+        // ตรวจสอบจำนวนการใช้งาน
+        if (isInviteUsageExceeded(invite)) {
+            return false;
+        }
+
+        // เพิ่มจำนวนการใช้งาน
+        incrementInviteUsage(inviteCode);
+        
+        // สร้าง GroupMember ใหม่ (ต้องเพิ่ม logic นี้ใน GroupMemberService)
+        // TODO: Implement group member creation
+        
+        return true;
     }
     
     /**
