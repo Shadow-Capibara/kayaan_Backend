@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS ai_draft (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id BIGINT NOT NULL,
+    user_id INT NOT NULL,
     draft_type VARCHAR(50) NOT NULL,
     title VARCHAR(255) NOT NULL,
     content TEXT,

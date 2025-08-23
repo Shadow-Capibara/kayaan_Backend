@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS streak_log (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id BIGINT NOT NULL,
+    user_id INT NOT NULL,
     activity_type VARCHAR(50) NOT NULL,
     activity_date DATE NOT NULL,
     points INT DEFAULT 0 NOT NULL,

@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS group_message (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     group_id INT NOT NULL,
-    user_id BIGINT NOT NULL,
+    user_id INT NOT NULL,
     content TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     FOREIGN KEY (group_id) REFERENCES study_group(groupid) ON DELETE CASCADE,

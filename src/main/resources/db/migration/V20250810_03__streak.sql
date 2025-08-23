@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS streak (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id BIGINT NOT NULL,
+    user_id INT NOT NULL,
     streak_type VARCHAR(50) NOT NULL,
     current_streak INT DEFAULT 0 NOT NULL,
     longest_streak INT DEFAULT 0 NOT NULL,

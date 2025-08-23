@@ -20,7 +20,6 @@ import se499.kayaanbackend.Study_Group.repository.GroupMemberRepository;
 import se499.kayaanbackend.Study_Group.repository.StudyGroupRepository;
 import se499.kayaanbackend.security.user.User;
 import se499.kayaanbackend.security.user.UserRepository;
-import se499.kayaanbackend.Study_Group.service.GroupNotificationService;
 
 @Service
 @RequiredArgsConstructor

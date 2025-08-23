@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS ai_job (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id BIGINT NOT NULL,
+    user_id INT NOT NULL,
     job_type VARCHAR(50) NOT NULL,
     status VARCHAR(50) NOT NULL,
     input_data TEXT,

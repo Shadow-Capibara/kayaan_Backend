@@ -3,7 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS content_audit_log (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id BIGINT NOT NULL,
+    user_id INT NOT NULL,
     content_id BIGINT NOT NULL,
     group_id INT NOT NULL,
     action ENUM('CREATE', 'UPDATE', 'DELETE', 'VIEW', 'DOWNLOAD', 'UPLOAD', 'EDIT', 'SHARE') NOT NULL,

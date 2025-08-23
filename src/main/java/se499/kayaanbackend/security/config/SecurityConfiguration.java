@@ -18,6 +18,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import org.springframework.http.HttpMethod;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -35,44 +36,39 @@ public class SecurityConfiguration {
 
       http
               .headers(headers -> headers.frameOptions().disable())
-              .cors(cors -> cors.configurationSource(request -> {
-                  CorsConfiguration config = new CorsConfiguration();
-                  config.setAllowedOrigins(List.of("http://localhost:5173"));
-                  config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-                  config.setAllowedHeaders(List.of("*"));
-                  config.setAllowCredentials(true);
-                  return config;
-              }))
+              .cors(cors -> cors.configurationSource(corsConfigurationSource()))
               .csrf(csrf -> csrf.disable())
-//              .authorizeHttpRequests(auth -> auth
-//                      .requestMatchers("/api/v1/auth/**").permitAll()
-//                      .requestMatchers(HttpMethod.POST,
-//                              "/api/users/*/avatar-upload").hasRole("USER")
-//                      .requestMatchers(HttpMethod.PUT ,
-//                              "/api/users/*/avatar-url").hasRole("USER")
-//                      .anyRequest().authenticated()
-//              )
-.authorizeHttpRequests(auth -> auth
-.requestMatchers("/api/v1/auth/**", "/api/auth/**").permitAll()
-.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()   // เผื่อ preflight
-
-.requestMatchers(HttpMethod.GET,  "/api/themes").permitAll()
-.requestMatchers(HttpMethod.GET,  "/api/users/me").authenticated()
-
-// ใช้ ant pattern (*) แทน {id}
-.requestMatchers(HttpMethod.POST, "/api/users/*/avatar-upload-url").authenticated()
-.requestMatchers(HttpMethod.POST, "/api/avatar/upload-proxy").authenticated()
-.requestMatchers(HttpMethod.POST, "/api/users/*/avatar-upload-proxy").authenticated()
-.requestMatchers(HttpMethod.PUT,  "/api/users/*/avatar-url").authenticated()
-
-// ถ้าคุณมีเส้นอื่นใต้ /api/users/{id}/... แล้วต้องการบังคับ auth:
-.requestMatchers("/api/users/*/**").authenticated()
-
-// Study Group endpoints - require authentication
-.requestMatchers("/api/groups/**").authenticated()
-
-.anyRequest().authenticated()
-)
+              .authorizeHttpRequests(auth -> auth
+                      // Public endpoints
+                      .requestMatchers("/api/v1/auth/**", "/api/auth/**").permitAll()
+                      .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()   // เผื่อ preflight
+                      .requestMatchers("/api/public/**").permitAll()
+                      
+                      // Theme endpoints
+                      .requestMatchers(HttpMethod.GET, "/api/themes").permitAll()
+                      
+                      // User endpoints
+                      .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
+                      .requestMatchers(HttpMethod.POST, "/api/users/*/avatar-upload-url").authenticated()
+                      .requestMatchers(HttpMethod.POST, "/api/avatar/upload-proxy").authenticated()
+                      .requestMatchers(HttpMethod.POST, "/api/users/*/avatar-upload-proxy").authenticated()
+                      .requestMatchers(HttpMethod.PUT, "/api/users/*/avatar-url").authenticated()
+                      .requestMatchers("/api/users/*/**").authenticated()
+                      
+                      // Study Group endpoints - ต้องมี authentication
+                      .requestMatchers("/api/groups/**").authenticated()
+                      .requestMatchers("/api/study-groups/**").authenticated()
+                      .requestMatchers("/api/group-members/**").authenticated()
+                      .requestMatchers("/api/group-content/**").authenticated()
+                      .requestMatchers("/api/group-messages/**").authenticated()
+                      .requestMatchers("/api/group-invites/**").authenticated()
+                      
+                      // Admin endpoints - ต้องมี role ADMIN
+                      .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                      
+                      // อื่นๆ ต้องมี authentication
+                      .anyRequest().authenticated()
+              )
               .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
               .authenticationProvider(authenticationProvider)
               .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
@@ -84,16 +80,41 @@ public class SecurityConfiguration {
       return http.build();
 
   }
+    
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        var config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
-        config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
-        var source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
+        CorsConfiguration configuration = new CorsConfiguration();
+        
+        // อนุญาต origin จาก frontend
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+            "http://localhost:3000",      // React dev server
+            "http://localhost:3001",      // Alternative port
+            "http://localhost:5173",      // Vite dev server
+            "https://kayaan-frontend.vercel.app", // Production frontend
+            "https://*.vercel.app"       // Vercel deployments
+        ));
+        
+        // อนุญาต HTTP methods
+        configuration.setAllowedMethods(Arrays.asList(
+            "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
+        ));
+        
+        // อนุญาต headers
+        configuration.setAllowedHeaders(Arrays.asList(
+            "Authorization", "Content-Type", "X-Requested-With", 
+            "Accept", "Origin", "Access-Control-Request-Method",
+            "Access-Control-Request-Headers"
+        ));
+        
+        // อนุญาต credentials
+        configuration.setAllowCredentials(true);
+        
+        // ตั้งค่า max age
+        configuration.setMaxAge(3600L);
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        
         return source;
     }
-
-
 }
