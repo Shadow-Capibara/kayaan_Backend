@@ -1,19 +1,22 @@
 package se499.kayaanbackend.AI_Generate.service;
 
-import lombok.extern.slf4j.Slf4j;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service for integrating with OpenAI API for content generation
@@ -23,28 +26,28 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class OpenAIService {
     
-    @Value("${openai.api.key:}")
+    @Value("${ai.openai.api-key}")
     private String openaiApiKey;
     
-    @Value("${openai.api.url:https://api.openai.com/v1/chat/completions}")
-    private String openaiApiUrl;
-    
-    @Value("${openai.model:gpt-3.5-turbo}")
+    @Value("${ai.openai.model:gpt-3.5-turbo}")
     private String openaiModel;
     
-    @Value("${openai.max.tokens:2000}")
+    @Value("${ai.openai.max-tokens:2000}")
     private Integer maxTokens;
     
-    @Value("${openai.temperature:0.7}")
+    @Value("${ai.openai.temperature:0.7}")
     private Double temperature;
     
-    @Value("${openai.timeout.seconds:60}")
+    @Value("${ai.openai.timeout-seconds:60}")
     private Integer timeoutSeconds;
     
     private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
+    private final String openaiApiUrl = "https://api.openai.com/v1/chat/completions";
     
     public OpenAIService() {
         this.restTemplate = new RestTemplate();
+        this.objectMapper = new ObjectMapper();
     }
     
     /**
@@ -110,19 +113,19 @@ public class OpenAIService {
     private String buildSystemMessage(String outputFormat) {
         switch (outputFormat.toLowerCase()) {
             case "flashcard":
-                return "You are an expert educational content creator. Generate flashcards in JSON format with 'question' and 'answer' fields. Each flashcard should be concise and educational.";
+                return "You are an expert educational content creator. Generate flashcards in JSON format with 'question' and 'answer' fields. Each flashcard should be concise and educational. Respond only with valid JSON.";
                 
             case "quiz":
-                return "You are an expert quiz creator. Generate multiple-choice questions in JSON format with 'question', 'options' (array), 'correctAnswer' (index), and 'explanation' fields.";
+                return "You are an expert quiz creator. Generate multiple-choice questions in JSON format with 'question', 'options' (array), 'correctAnswer' (index), and 'explanation' fields. Respond only with valid JSON.";
                 
             case "note":
-                return "You are an expert note-taking assistant. Generate structured notes in JSON format with 'title', 'summary', 'keyPoints' (array), and 'details' fields.";
+                return "You are an expert note-taking assistant. Generate structured notes in JSON format with 'title', 'summary', 'keyPoints' (array), and 'details' fields. Respond only with valid JSON.";
                 
             case "summary":
-                return "You are an expert summarizer. Generate concise summaries in JSON format with 'mainPoints' (array), 'summary', and 'keyInsights' fields.";
+                return "You are an expert summarizer. Generate concise summaries in JSON format with 'mainPoints' (array), 'summary', and 'keyInsights' fields. Respond only with valid JSON.";
                 
             default:
-                return "You are an expert content creator. Generate content in JSON format based on the user's request.";
+                return "You are an expert content creator. Generate content in JSON format based on the user's request. Respond only with valid JSON.";
         }
     }
     
@@ -205,17 +208,25 @@ public class OpenAIService {
      */
     private String parseOpenAIResponse(String response, String outputFormat) {
         try {
-            // TODO: Implement proper JSON parsing of OpenAI response
-            // For now, return mock parsed content
-            String mockContent = String.format(
-                "{\"type\": \"%s\", \"generatedAt\": \"%s\", \"content\": \"Mock AI-generated content for %s format\"}",
-                outputFormat,
-                java.time.LocalDateTime.now().toString(),
-                outputFormat
-            );
+            // Parse actual OpenAI response
+            JsonNode jsonNode = objectMapper.readTree(response);
             
-            log.info("Response parsed successfully - Mock content generated");
-            return mockContent;
+            // Extract content from OpenAI response
+            String content = jsonNode.get("choices")
+                .get(0)
+                .get("message")
+                .get("content")
+                .asText();
+            
+            // Validate JSON format
+            try {
+                objectMapper.readTree(content);
+                log.info("Response parsed successfully - Valid JSON content");
+                return content;
+            } catch (Exception e) {
+                log.warn("OpenAI response is not valid JSON, returning as is");
+                return content;
+            }
             
         } catch (Exception e) {
             log.error("Failed to parse OpenAI response", e);
@@ -229,7 +240,7 @@ public class OpenAIService {
      */
     public boolean isConfigurationValid() {
         return openaiApiKey != null && !openaiApiKey.trim().isEmpty() &&
-               openaiApiUrl != null && !openaiApiUrl.trim().isEmpty();
+               !openaiApiKey.equals("your-openai-api-key-here");
     }
     
     /**
@@ -243,9 +254,14 @@ public class OpenAIService {
                 return false;
             }
             
-            // TODO: Implement actual connection test
-            // For now, return mock success
-            log.info("OpenAI API connection test successful (mock)");
+            // Test with a simple prompt
+            String testPrompt = "Generate a simple JSON response: {\"test\": \"Hello World\"}";
+            String systemMessage = "You are a test assistant. Respond with the exact JSON requested.";
+            
+            Map<String, Object> payload = buildRequestPayload(systemMessage, testPrompt);
+            String response = makeOpenAIRequest(payload);
+            
+            log.info("OpenAI API connection test successful");
             return true;
             
         } catch (Exception e) {

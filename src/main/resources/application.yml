@@ -73,3 +73,25 @@ kayaan:
 
 avatar:
   upload-dir: ${user.dir}/uploads/avatars
+
+# AI Configuration
+ai:
+  openai:
+    api-key: ${OPENAI_API_KEY:your-openai-api-key-here}
+    model: ${OPENAI_MODEL:gpt-3.5-turbo}
+    max-tokens: ${OPENAI_MAX_TOKENS:2000}
+    temperature: ${OPENAI_TEMPERATURE:0.7}
+    timeout-seconds: ${OPENAI_TIMEOUT_SECONDS:60}
+  
+  generation:
+    rate-limit:
+      max-requests-per-hour: 5
+      max-previews-per-minute: 3
+      max-templates-per-user: 50
+      max-content-per-user: 100
+    
+    async:
+      core-pool-size: 2
+      max-pool-size: 5
+      queue-capacity: 100
+      thread-name-prefix: "ai-generation-"
