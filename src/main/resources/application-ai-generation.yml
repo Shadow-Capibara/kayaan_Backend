@@ -1,0 +1,152 @@
+# AI Generation Feature Configuration
+ai:
+  generation:
+    # Rate limiting settings
+    rate-limit:
+      max-requests-per-hour: 5
+      max-previews-per-minute: 3
+      max-templates-per-user: 50
+      max-content-per-user: 100
+    
+    # Async processing settings
+    async:
+      core-pool-size: 2
+      max-pool-size: 5
+      queue-capacity: 100
+      thread-name-prefix: "ai-generation-"
+    
+    # OpenAI settings
+    openai:
+      api-key: ${OPENAI_API_KEY:your-openai-api-key-here}
+      model: "gpt-3.5-turbo"
+      max-tokens: 2000
+      temperature: 0.7
+      timeout-seconds: 30
+    
+    # Supabase settings
+    supabase:
+      url: ${SUPABASE_URL:your-supabase-url-here}
+      key: ${SUPABASE_KEY:your-supabase-anon-key-here}
+      bucket: "ai-generated-content"
+      max-file-size-mb: 10
+      signed-url-expiry-minutes: 60
+
+# Logging configuration for AI Generation
+logging:
+  level:
+    se499.kayaanbackend.AI_Generate: DEBUG
+    se499.kayaanbackend.AI_Generate.service: DEBUG
+    se499.kayaanbackend.AI_Generate.controller: DEBUG
+    se499.kayaanbackend.AI_Generate.repository: DEBUG
+
+# Database configuration for AI Generation tables
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+  
+  # Flyway configuration for AI Generation migrations
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    validate-on-migrate: true
+    locations: classpath:db/migration
+
+# Security configuration for AI Generation endpoints
+security:
+  jwt:
+    secret: ${JWT_SECRET:your-jwt-secret-here}
+    expiration: 86400000 # 24 hours in milliseconds
+  
+  # Rate limiting configuration
+  rate-limit:
+    enabled: true
+    window-size: 3600 # 1 hour in seconds
+    max-requests: 100 # per window per user
+
+# Server configuration
+server:
+  port: 8080
+  servlet:
+    context-path: /
+  
+  # CORS configuration for AI Generation
+  cors:
+    allowed-origins: "*"
+    allowed-methods: "GET,POST,PUT,DELETE,OPTIONS"
+    allowed-headers: "*"
+    allow-credentials: true
+    max-age: 3600
+
+# Management endpoints for monitoring AI Generation
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Cache configuration for AI Generation
+spring:
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=500,expireAfterWrite=600s
+  
+  # Redis configuration (optional, for distributed caching)
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    timeout: 2000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+
+# Async configuration
+spring:
+  task:
+    execution:
+      pool:
+        core-size: 2
+        max-size: 5
+        queue-capacity: 100
+        keep-alive: 60s
+      shutdown:
+        await-termination: true
+        await-termination-period: 30s
+
+# File upload configuration for AI Generation content
+spring:
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
+      file-size-threshold: 2KB
+
+# Health check configuration
+management:
+  health:
+    defaults:
+      enabled: true
+    db:
+      enabled: true
+    redis:
+      enabled: true
+    diskspace:
+      enabled: true
+      threshold: 10MB
