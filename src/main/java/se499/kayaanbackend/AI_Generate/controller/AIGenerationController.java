@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import se499.kayaanbackend.AI_Generate.dto.*;
 import se499.kayaanbackend.AI_Generate.service.AIGenerationService;
 import se499.kayaanbackend.security.user.User;
@@ -63,12 +64,21 @@ public class AIGenerationController {
     @PostMapping("/request")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponseDTO<Long>> createGenerationRequest(
-            @Valid @RequestBody CreateGenerationRequestDTO requestDTO,
+            @RequestPart("request") @Valid CreateGenerationRequestDTO requestDTO,
+            @RequestPart(value = "file", required = false) MultipartFile file,
             @RequestAttribute("user") User user) {
         
-        log.info("Creating generation request for user: {}", user.getId());
+        log.info("Creating generation request for user: {} with file: {}", 
+                user.getId(), file != null ? file.getOriginalFilename() : "none");
         
         try {
+            // Set file information if provided
+            if (file != null && !file.isEmpty()) {
+                requestDTO.setUploadedFile(file);
+                requestDTO.setFileName(file.getOriginalFilename());
+                requestDTO.setFileType(file.getContentType());
+            }
+            
             Long requestId = aiGenerationService.createGenerationRequest(requestDTO, user.getId().longValue());
             
             ApiResponseDTO<Long> response = ApiResponseDTO.<Long>builder()
@@ -157,6 +167,43 @@ public class AIGenerationController {
             ApiResponseDTO<GenerationStatusDTO> response = ApiResponseDTO.<GenerationStatusDTO>builder()
                     .success(false)
                     .message("Failed to get generation status: " + e.getMessage())
+                    .build();
+            
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+    }
+    
+    /**
+     * UC-21.1: Get Real-time Generation Progress
+     * GET /api/ai/generation/{requestId}/progress
+     */
+    @GetMapping("/{requestId}/progress")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ApiResponseDTO<Object>> getGenerationProgress(
+            @PathVariable @NotNull Long requestId,
+            @RequestAttribute("user") User user) {
+        
+        log.info("Getting generation progress for request: {}, user: {}", requestId, user.getId());
+        
+        try {
+            // This endpoint is for initial progress check
+            // Real-time updates are sent via WebSocket
+            Object progress = aiGenerationService.getGenerationProgress(requestId, user.getId().longValue());
+            
+            ApiResponseDTO<Object> response = ApiResponseDTO.<Object>builder()
+                    .success(true)
+                    .message("Generation progress retrieved successfully")
+                    .data(progress)
+                    .build();
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Failed to get generation progress", e);
+            
+            ApiResponseDTO<Object> response = ApiResponseDTO.<Object>builder()
+                    .success(false)
+                    .message("Failed to get generation progress: " + e.getMessage())
                     .build();
             
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);

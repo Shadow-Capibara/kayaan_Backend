@@ -45,7 +45,7 @@ public class AvatarController {
     private final AvatarService avatarService;
     private final StorageService storageService;
     
-    @Value("${kayaan.supabase.buckets.avatars}")
+    @Value("${supabase.buckets.avatars}")
     private String avatarsBucket;
     
     public AvatarController(AvatarService avatarService, StorageService storageService) {

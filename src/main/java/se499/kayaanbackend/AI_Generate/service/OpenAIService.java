@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
+import se499.kayaanbackend.AI_Generate.service.AIGenerationRateLimitService;
 
 /**
  * Service for integrating with OpenAI API for content generation
@@ -48,7 +49,7 @@ public class OpenAIService {
     private final String openaiApiUrl = "https://api.openai.com/v1/chat/completions";
     
     @Autowired
-    private RateLimitService rateLimitService;
+    private AIGenerationRateLimitService rateLimitService;
     
     @Autowired
     private TokenUsageService tokenUsageService;

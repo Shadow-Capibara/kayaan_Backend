@@ -14,11 +14,19 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void configureMessageBroker(MessageBrokerRegistry config) {
         config.enableSimpleBroker("/topic");
         config.setApplicationDestinationPrefixes("/app");
+        
+        // Enable user destination prefix for private messages
+        config.setUserDestinationPrefix("/user");
     }
     
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
+                .setAllowedOriginPatterns("*")
+                .withSockJS();
+        
+        // Add AI generation specific endpoint
+        registry.addEndpoint("/ws/ai")
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
     }

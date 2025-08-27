@@ -53,6 +53,14 @@ public interface AIGenerationService {
     GenerationStatusDTO getGenerationStatus(Long requestId, Long userId);
     
     /**
+     * Get real-time generation progress
+     * @param requestId Generation request ID
+     * @param userId User ID
+     * @return Progress data
+     */
+    Object getGenerationProgress(Long requestId, Long userId);
+    
+    /**
      * Get all generation requests for a user
      * @param userId User ID
      * @param pageable Pagination

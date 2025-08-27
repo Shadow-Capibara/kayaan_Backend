@@ -16,6 +16,7 @@ import se499.kayaanbackend.security.user.User;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -523,6 +524,80 @@ public class AIGenerationServiceImpl implements AIGenerationService {
         
         log.info("Cleaned up {} old requests", cleanedCount);
         return cleanedCount;
+    }
+    
+    @Override
+    public Object getGenerationProgress(Long requestId, Long userId) {
+        log.info("Getting generation progress for request: {}, user: {}", requestId, userId);
+        
+        // Get generation request
+        AIGenerationRequest request = generationRequestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Generation request not found"));
+        
+        // Verify user ownership
+        if (!request.getUser().getId().equals(userId.intValue())) {
+            throw new RuntimeException("Access denied to generation request");
+        }
+        
+        // Get current progress from tracking
+        Integer progress = requestProgress.get(requestId);
+        if (progress == null) {
+            progress = request.getProgress();
+        }
+        
+        // Create progress response
+        return Map.of(
+            "requestId", requestId,
+            "status", request.getStatus(),
+            "progress", progress,
+            "startedAt", request.getStartedAt(),
+            "estimatedCompletion", request.getStartedAt() != null ? 
+                request.getStartedAt().plusMinutes(5) : null,
+            "currentStep", getCurrentStep(request.getStatus(), progress),
+            "message", getProgressMessage(request.getStatus(), progress)
+        );
+    }
+    
+    private String getCurrentStep(AIGenerationRequest.GenerationStatus status, Integer progress) {
+        switch (status) {
+            case PENDING:
+                return "Waiting to start";
+            case PROCESSING:
+                if (progress < 25) return "Initializing AI model";
+                if (progress < 50) return "Processing prompt";
+                if (progress < 75) return "Generating content";
+                if (progress < 100) return "Finalizing output";
+                return "Completing generation";
+            case COMPLETED:
+                return "Generation completed";
+            case FAILED:
+                return "Generation failed";
+            case CANCELLED:
+                return "Generation cancelled";
+            default:
+                return "Unknown status";
+        }
+    }
+    
+    private String getProgressMessage(AIGenerationRequest.GenerationStatus status, Integer progress) {
+        switch (status) {
+            case PENDING:
+                return "Your request is queued and will start soon";
+            case PROCESSING:
+                if (progress < 25) return "Setting up AI model and preparing resources";
+                if (progress < 50) return "Analyzing your prompt and generating ideas";
+                if (progress < 75) return "Creating content based on your requirements";
+                if (progress < 100) return "Finalizing and optimizing the output";
+                return "Almost done! Finalizing your content";
+            case COMPLETED:
+                return "Content generation completed successfully";
+            case FAILED:
+                return "Content generation failed. You can retry or contact support";
+            case CANCELLED:
+                return "Content generation was cancelled";
+            default:
+                return "Unknown status";
+        }
     }
     
     // Helper methods

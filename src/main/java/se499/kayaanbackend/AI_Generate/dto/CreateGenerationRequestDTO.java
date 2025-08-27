@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 @Data
 @Builder
@@ -25,6 +26,13 @@ public class CreateGenerationRequestDTO {
     @Size(max = 500, message = "Additional context must not exceed 500 characters")
     private String additionalContext;
     
+    // File upload support
+    private MultipartFile uploadedFile; // PDF, DOCX, TXT, Image files
+    
+    private String fileType; // "pdf", "docx", "txt", "image"
+    
+    private String fileName; // Original filename
+    
     @Builder.Default
     private Integer maxRetries = 3;
     
@@ -32,4 +40,11 @@ public class CreateGenerationRequestDTO {
     private Boolean useTemplate = false;
     
     private Long templateId; // Optional: if using existing template
+    
+    // File processing options
+    @Builder.Default
+    private Boolean extractTextFromFile = true; // Whether to extract text from uploaded file
+    
+    @Builder.Default
+    private Boolean useFileContentAsContext = true; // Whether to use file content as additional context
 }

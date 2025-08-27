@@ -22,13 +22,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GroupStorageServiceImpl implements GroupStorageService {
     
-    @Value("${kayaan.supabase.url}")
+    @Value("${supabase.url}")
     private String supabaseUrl;
     
-    @Value("${kayaan.supabase.service-key}")
+    @Value("${supabase.serviceKey}")
     private String supabaseServiceKey;
     
-    @Value("${kayaan.supabase.buckets.library:library}")
+    @Value("${supabase.buckets.library:library}")
     private String libraryBucket;
     
     private final RestTemplate restTemplate = new RestTemplate();

@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import se499.kayaanbackend.AI_Generate.service.RateLimitService;
+import se499.kayaanbackend.AI_Generate.service.AIGenerationRateLimitService;
 import se499.kayaanbackend.AI_Generate.service.TokenUsageService;
 import se499.kayaanbackend.AI_Generate.service.CachedAIService;
 
@@ -23,7 +23,7 @@ import java.util.Map;
 public class AIMonitoringController {
 
     @Autowired
-    private RateLimitService rateLimitService;
+    private AIGenerationRateLimitService rateLimitService;
 
     @Autowired
     private TokenUsageService tokenUsageService;
@@ -37,7 +37,7 @@ public class AIMonitoringController {
     @GetMapping("/rate-limits/{userId}")
     public ResponseEntity<Map<String, Object>> getRateLimitUsage(@PathVariable String userId) {
         try {
-            RateLimitService.RateLimitInfo usage = rateLimitService.getCurrentUsage(userId);
+            AIGenerationRateLimitService.RateLimitInfo usage = rateLimitService.getCurrentUsage(userId);
             
             Map<String, Object> response = new HashMap<>();
             response.put("userId", userId);

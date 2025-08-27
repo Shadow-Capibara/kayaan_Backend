@@ -2,7 +2,8 @@ package se499.kayaanbackend.AI_Generate.service;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -13,9 +14,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Rate limiting service for AI generation requests
  * Prevents abuse and helps control costs
  */
-@Slf4j
 @Service
-public class RateLimitService {
+public class AIGenerationRateLimitService {
+    
+    private static final Logger log = LoggerFactory.getLogger(AIGenerationRateLimitService.class);
 
     @Value("${ai.generation.rate-limit.max-requests-per-hour:5}")
     private int maxRequestsPerHour;

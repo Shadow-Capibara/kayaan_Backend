@@ -28,7 +28,7 @@ public class AIJobServiceImpl implements AIJobService {
     @Autowired
     private AIDraftRepository aiDraftRepository;
     
-    @Value("${kayaan.supabase.buckets.ai}")
+    @Value("${supabase.buckets.ai}")
     private String aiBucket;
     
     @Override
