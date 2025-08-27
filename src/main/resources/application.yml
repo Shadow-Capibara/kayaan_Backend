@@ -78,15 +78,16 @@ avatar:
 ai:
   openai:
     api-key: ${OPENAI_API_KEY:your-openai-api-key-here}
-    model: ${OPENAI_MODEL:gpt-3.5-turbo}
-    max-tokens: ${OPENAI_MAX_TOKENS:2000}
-    temperature: ${OPENAI_TEMPERATURE:0.7}
-    timeout-seconds: ${OPENAI_TIMEOUT_SECONDS:60}
+    model: ${OPENAI_MODEL:gpt-5-nano}
+    max-tokens: ${OPENAI_MAX_TOKENS:256}
+    temperature: ${OPENAI_TEMPERATURE:0.1}
+    timeout-seconds: ${OPENAI_TIMEOUT_SECONDS:30}
   
   generation:
     rate-limit:
       max-requests-per-hour: 5
-      max-previews-per-minute: 3
+      max-requests-per-minute: 3
+      max-requests-per-day: 50
       max-templates-per-user: 50
       max-content-per-user: 100
     

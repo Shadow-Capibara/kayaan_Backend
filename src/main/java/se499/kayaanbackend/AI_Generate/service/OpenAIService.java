@@ -4,7 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -29,21 +31,27 @@ public class OpenAIService {
     @Value("${ai.openai.api-key}")
     private String openaiApiKey;
     
-    @Value("${ai.openai.model:gpt-3.5-turbo}")
+    @Value("${ai.openai.model:gpt-5-nano}")
     private String openaiModel;
     
-    @Value("${ai.openai.max-tokens:2000}")
+    @Value("${ai.openai.max-tokens:256}")
     private Integer maxTokens;
     
-    @Value("${ai.openai.temperature:0.7}")
+    @Value("${ai.openai.temperature:0.1}")
     private Double temperature;
     
-    @Value("${ai.openai.timeout-seconds:60}")
+    @Value("${ai.openai.timeout-seconds:30}")
     private Integer timeoutSeconds;
     
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     private final String openaiApiUrl = "https://api.openai.com/v1/chat/completions";
+    
+    @Autowired
+    private RateLimitService rateLimitService;
+    
+    @Autowired
+    private TokenUsageService tokenUsageService;
     
     public OpenAIService() {
         this.restTemplate = new RestTemplate();
@@ -69,16 +77,22 @@ public class OpenAIService {
     }
     
     /**
-     * Generate content using OpenAI API
+     * Generate content using OpenAI API with caching and rate limiting
      * @param prompt User prompt for content generation
      * @param outputFormat Expected output format
      * @param additionalContext Additional context for generation
+     * @param userId User ID for rate limiting and monitoring
      * @return Generated content as JSON string
      */
-    public String generateContent(String prompt, String outputFormat, String additionalContext) {
+    public String generateContent(String prompt, String outputFormat, String additionalContext, String userId) {
         try {
-            log.info("Generating content with OpenAI API - Format: {}, Prompt length: {} chars", 
-                outputFormat, prompt.length());
+            log.info("Generating content with OpenAI API - Format: {}, Prompt length: {} chars, User: {}", 
+                outputFormat, prompt.length(), userId);
+            
+            // Check rate limits
+            if (!rateLimitService.canMakeRequest(userId)) {
+                throw new RuntimeException("Rate limit exceeded. Please try again later.");
+            }
             
             // Build system message based on output format
             String systemMessage = buildSystemMessage(outputFormat);
@@ -95,14 +109,26 @@ public class OpenAIService {
             // Parse and validate response
             String generatedContent = parseOpenAIResponse(response, outputFormat);
             
-            log.info("Content generation successful - Output length: {} chars", generatedContent.length());
+            // Record successful request and token usage
+            rateLimitService.recordRequest(userId);
+            recordTokenUsage(response, userId);
+            
+            log.info("Content generation successful - Output length: {} chars, User: {}", 
+                    generatedContent.length(), userId);
             
             return generatedContent;
             
         } catch (Exception e) {
-            log.error("Failed to generate content with OpenAI API", e);
+            log.error("Failed to generate content with OpenAI API for user: {}", userId, e);
             throw new RuntimeException("OpenAI API call failed: " + e.getMessage());
         }
+    }
+    
+    /**
+     * Generate content using OpenAI API (backward compatibility)
+     */
+    public String generateContent(String prompt, String outputFormat, String additionalContext) {
+        return generateContent(prompt, outputFormat, additionalContext, "anonymous");
     }
     
     /**
@@ -111,22 +137,8 @@ public class OpenAIService {
      * @return System message
      */
     private String buildSystemMessage(String outputFormat) {
-        switch (outputFormat.toLowerCase()) {
-            case "flashcard":
-                return "You are an expert educational content creator. Generate flashcards in JSON format with 'question' and 'answer' fields. Each flashcard should be concise and educational. Respond only with valid JSON.";
-                
-            case "quiz":
-                return "You are an expert quiz creator. Generate multiple-choice questions in JSON format with 'question', 'options' (array), 'correctAnswer' (index), and 'explanation' fields. Respond only with valid JSON.";
-                
-            case "note":
-                return "You are an expert note-taking assistant. Generate structured notes in JSON format with 'title', 'summary', 'keyPoints' (array), and 'details' fields. Respond only with valid JSON.";
-                
-            case "summary":
-                return "You are an expert summarizer. Generate concise summaries in JSON format with 'mainPoints' (array), 'summary', and 'keyInsights' fields. Respond only with valid JSON.";
-                
-            default:
-                return "You are an expert content creator. Generate content in JSON format based on the user's request. Respond only with valid JSON.";
-        }
+        // ใช้ prompt สั้นสุดตามที่ต้องการ
+        return "JSON only. Be concise.";
     }
     
     /**
@@ -136,13 +148,20 @@ public class OpenAIService {
      * @return User message
      */
     private String buildUserMessage(String prompt, String additionalContext) {
-        StringBuilder message = new StringBuilder(prompt);
+        // ตัดความยาว input ก่อนส่ง (จำกัดที่ 1000 characters)
+        String truncatedPrompt = prompt.length() > 1000 ? 
+            prompt.substring(0, 1000) + "..." : prompt;
+        
+        StringBuilder message = new StringBuilder(truncatedPrompt);
         
         if (additionalContext != null && !additionalContext.trim().isEmpty()) {
-            message.append("\n\nAdditional Context: ").append(additionalContext);
+            String truncatedContext = additionalContext.length() > 500 ? 
+                additionalContext.substring(0, 500) + "..." : additionalContext;
+            message.append("\n\nContext: ").append(truncatedContext);
         }
         
-        message.append("\n\nPlease ensure the response is valid JSON format.");
+        // เพิ่ม JSON mode enforcement
+        message.append("\n\nResponse format: JSON only. Max 256 tokens.");
         
         return message.toString();
     }
@@ -158,6 +177,10 @@ public class OpenAIService {
         payload.put("model", openaiModel);
         payload.put("max_tokens", maxTokens);
         payload.put("temperature", temperature);
+        
+        // เพิ่ม JSON mode เพื่อบังคับ JSON response
+        payload.put("response_format", Map.of("type", "json_object"));
+        
         payload.put("messages", new Object[]{
             Map.of("role", "system", "content", systemMessage),
             Map.of("role", "user", "content", userMessage)
@@ -283,6 +306,32 @@ public class OpenAIService {
         int formatFactor = getFormatComplexityFactor(outputFormat);
         
         return Math.max(baseTime, baseTime + promptFactor + formatFactor);
+    }
+    
+    /**
+     * Record token usage from OpenAI response
+     * @param response OpenAI API response
+     * @param userId User ID for tracking
+     */
+    private void recordTokenUsage(String response, String userId) {
+        try {
+            JsonNode jsonNode = objectMapper.readTree(response);
+            
+            // Extract token usage from OpenAI response
+            JsonNode usageNode = jsonNode.get("usage");
+            if (usageNode != null) {
+                int inputTokens = usageNode.get("prompt_tokens").asInt(0);
+                int outputTokens = usageNode.get("completion_tokens").asInt(0);
+                
+                // Record token usage
+                tokenUsageService.recordTokenUsage(userId, inputTokens, outputTokens);
+                
+                log.debug("Recorded token usage - User: {}, Input: {}, Output: {}", 
+                         userId, inputTokens, outputTokens);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to record token usage for user: {}", userId, e);
+        }
     }
     
     /**
