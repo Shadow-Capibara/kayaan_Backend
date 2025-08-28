@@ -98,7 +98,6 @@ management:
         enabled: true
 
 # Cache configuration for AI Generation
-spring:
   cache:
     type: caffeine
     caffeine:
@@ -116,8 +115,7 @@ spring:
         max-idle: 8
         min-idle: 0
 
-# Async configuration
-spring:
+  # Async configuration
   task:
     execution:
       pool:
@@ -129,8 +127,7 @@ spring:
         await-termination: true
         await-termination-period: 30s
 
-# File upload configuration for AI Generation content
-spring:
+  # File upload configuration for AI Generation content
   servlet:
     multipart:
       enabled: true
@@ -138,8 +135,6 @@ spring:
       max-request-size: 10MB
       file-size-threshold: 2KB
 
-# Health check configuration
-management:
   health:
     defaults:
       enabled: true

@@ -32,8 +32,9 @@ public class AIGeneratedContent {
     @Column(name = "content_title", nullable = false)
     private String contentTitle;
     
+    @Enumerated(EnumType.STRING)
     @Column(name = "content_type", nullable = false)
-    private String contentType; // e.g., "flashcard", "quiz", "note", "summary"
+    private ContentType contentType; // FLASHCARD, QUIZ, NOTE
     
     @Column(name = "content_data", nullable = false, columnDefinition = "JSON")
     private String contentData; // AI-generated content in JSON format

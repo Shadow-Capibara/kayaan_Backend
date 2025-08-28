@@ -23,7 +23,7 @@ public class PreviewRequestDTO {
     
     @NotBlank(message = "Content type is required")
     @Size(max = 50, message = "Content type must not exceed 50 characters")
-    private String contentType; // e.g., "flashcard", "quiz", "note", "summary"
+    private String contentType; // "flashcard", "quiz", "note"
     
     @NotBlank(message = "Content data is required")
     private String contentData; // JSON string of AI-generated content

@@ -28,8 +28,9 @@ public class AIGenerationRequest {
     @Column(name = "prompt_text", nullable = false, columnDefinition = "TEXT")
     private String promptText;
     
+    @Enumerated(EnumType.STRING)
     @Column(name = "output_format", nullable = false)
-    private String outputFormat; // e.g., "flashcard", "quiz", "note", "summary"
+    private ContentType outputFormat; // FLASHCARD, QUIZ, NOTE
     
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
