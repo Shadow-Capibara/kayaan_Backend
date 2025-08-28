@@ -6,7 +6,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -19,7 +18,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
-import se499.kayaanbackend.AI_Generate.service.AIGenerationRateLimitService;
 
 /**
  * Service for integrating with OpenAI API for content generation
@@ -138,8 +136,20 @@ public class OpenAIService {
      * @return System message
      */
     private String buildSystemMessage(String outputFormat) {
-        // ใช้ prompt สั้นสุดตามที่ต้องการ
-        return "JSON only. Be concise.";
+        String baseMessage = "You are an expert educational content generator. Create structured, high-quality study materials in English language using JSON format following specific schemas.";
+        
+        switch (outputFormat.toLowerCase()) {
+            case "note":
+                return baseMessage + " MUST include topic field. Generate: { \"topic\": \"Topic Title in English\", \"type\": \"note\", \"content\": [{ \"feature\": \"Section Title\", \"description\": \"Detailed explanation in English\" }] }";
+            case "quiz":
+                return baseMessage + " Create quiz with mixed question types. Include: multiple-choice (with 4 options), true-false, and open-ended questions. Format: {\"topic\":\"Quiz Topic in English\",\"type\":\"quiz\",\"questions\":[{\"id\":1,\"type\":\"multiple-choice\",\"question\":\"Question in English?\",\"options\":[\"Option A\",\"Option B\",\"Option C\",\"Option D\"],\"correctAnswer\":\"Option A\"},{\"id\":2,\"type\":\"true-false\",\"question\":\"Statement in English?\",\"correctAnswer\":\"true\"},{\"id\":3,\"type\":\"open-ended\",\"question\":\"Open question in English?\",\"correctAnswer\":\"Sample answer in English\"}]}";
+            case "flashcard":
+                return baseMessage + " MUST include topic field. Generate: { \"topic\": \"Flashcard Set Title in English\", \"type\": \"flashcard\", \"flashcards\": [{ \"question\": \"Question in English\", \"answer\": \"Answer in English\" }] }";
+            case "summary":
+                return baseMessage + " MUST include topic field. Generate: { \"topic\": \"Summary Title in English\", \"type\": \"summary\", \"keyPoints\": [\"Key point in English\"] }";
+            default:
+                return baseMessage + " MUST include topic field in JSON response. Use English language for all content.";
+        }
     }
     
     /**
@@ -161,8 +171,14 @@ public class OpenAIService {
             message.append("\n\nContext: ").append(truncatedContext);
         }
         
-        // เพิ่ม JSON mode enforcement
-        message.append("\n\nResponse format: JSON only. Max 256 tokens.");
+        // Add structured JSON schema requirements
+        message.append("\n\nIMPORTANT: Response must be valid JSON with proper structure including:");
+        message.append("\n- 'topic' field with descriptive topic name in English");
+        message.append("\n- 'type' field indicating content type");
+        message.append("\n- For quiz: Mix 3 question types - multiple-choice (4 options), true-false, open-ended");
+        message.append("\n- Use English language for ALL content fields");
+        message.append("\n- Make content educational and engaging in English");
+        message.append("\n\nResponse format: Valid JSON object only.");
         
         return message.toString();
     }
@@ -176,8 +192,16 @@ public class OpenAIService {
     private Map<String, Object> buildRequestPayload(String systemMessage, String userMessage) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("model", openaiModel);
-        payload.put("max_tokens", maxTokens);
-        payload.put("temperature", temperature);
+        
+        // Use max_completion_tokens for gpt-5-nano, max_tokens for other models
+        if (openaiModel.startsWith("gpt-5")) {
+            payload.put("max_completion_tokens", maxTokens);
+            // gpt-5-nano only supports default temperature (1)
+            // payload.put("temperature", 1.0); // Default, can be omitted
+        } else {
+            payload.put("max_tokens", maxTokens);
+            payload.put("temperature", temperature);
+        }
         
         // เพิ่ม JSON mode เพื่อบังคับ JSON response
         payload.put("response_format", Map.of("type", "json_object"));
@@ -232,15 +256,38 @@ public class OpenAIService {
      */
     private String parseOpenAIResponse(String response, String outputFormat) {
         try {
+            log.info("Raw OpenAI response: {}", response);
+            
             // Parse actual OpenAI response
             JsonNode jsonNode = objectMapper.readTree(response);
             
+            // Check if choices array exists and has content
+            if (!jsonNode.has("choices") || jsonNode.get("choices").size() == 0) {
+                log.error("No choices in OpenAI response");
+                return "";
+            }
+            
+            JsonNode firstChoice = jsonNode.get("choices").get(0);
+            if (!firstChoice.has("message")) {
+                log.error("No message in first choice");
+                return "";
+            }
+            
+            JsonNode message = firstChoice.get("message");
+            if (!message.has("content")) {
+                log.error("No content in message");
+                return "";
+            }
+            
             // Extract content from OpenAI response
-            String content = jsonNode.get("choices")
-                .get(0)
-                .get("message")
-                .get("content")
-                .asText();
+            String content = message.get("content").asText();
+            log.info("Extracted content: '{}', length: {}", content, content.length());
+            
+            // For gpt-5-nano, content might be empty due to max_completion_tokens limit
+            if (content == null || content.trim().isEmpty()) {
+                log.warn("OpenAI returned empty content");
+                return "";
+            }
             
             // Validate JSON format
             try {
@@ -248,7 +295,7 @@ public class OpenAIService {
                 log.info("Response parsed successfully - Valid JSON content");
                 return content;
             } catch (Exception e) {
-                log.warn("OpenAI response is not valid JSON, returning as is");
+                log.warn("OpenAI response is not valid JSON, returning as is: {}", content);
                 return content;
             }
             
@@ -263,6 +310,8 @@ public class OpenAIService {
      * @return True if configuration is valid
      */
     public boolean isConfigurationValid() {
+        log.info("Checking OpenAI configuration - API key present: {}, length: {}", 
+                openaiApiKey != null, openaiApiKey != null ? openaiApiKey.length() : 0);
         return openaiApiKey != null && !openaiApiKey.trim().isEmpty() &&
                !openaiApiKey.equals("your-openai-api-key-here");
     }

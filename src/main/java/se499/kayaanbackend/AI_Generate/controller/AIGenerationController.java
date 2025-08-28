@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,9 +60,11 @@ public class AIGenerationController {
     ) {
         try {
             log.info("Creating generation request for user: {}", user.getId());
+            log.info("Raw request JSON received: {}", requestJson);
             
             // Parse request JSON and validate content type
             CreateGenerationRequestDTO dto = parseCreateRequest(requestJson);
+            log.info("Parsed DTO: promptText={}, outputFormat={}", dto.getPromptText(), dto.getOutputFormat());
             
             // Validate content type
             if (!contentTypeValidationService.isValidContentType(dto.getOutputFormat())) {
@@ -396,13 +400,13 @@ public class AIGenerationController {
 
     // Helper methods
     private CreateGenerationRequestDTO parseCreateRequest(String requestJson) {
-        // Simple JSON parsing - in production, use ObjectMapper
-        // This is a simplified version for demonstration
-        return CreateGenerationRequestDTO.builder()
-            .promptText("Sample prompt") // Parse from JSON
-            .outputFormat("flashcard") // Parse from JSON
-            .maxRetries(3)
-            .build();
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.readValue(requestJson, CreateGenerationRequestDTO.class);
+        } catch (Exception e) {
+            log.error("Failed to parse request JSON: {}", requestJson, e);
+            throw new RuntimeException("Invalid JSON format", e);
+        }
     }
 
     private String getFileExtension(String fileName) {

@@ -43,6 +43,8 @@ public class SecurityConfiguration {
                       .requestMatchers("/api/v1/auth/**", "/api/auth/**").permitAll()
                       .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()   // เผื่อ preflight
                       .requestMatchers("/api/public/**").permitAll()
+                      .requestMatchers("/api/ai/config/test").permitAll()  // AI config test endpoint
+                      .requestMatchers("/api/ai/debug/**").permitAll()    // AI debug endpoints
                       
                       // Theme endpoints
                       .requestMatchers(HttpMethod.GET, "/api/themes").permitAll()

@@ -17,7 +17,7 @@ ai:
     
     # OpenAI settings
     openai:
-      api-key: ${OPENAI_API_KEY:your-openai-api-key-here}
+      api-key: ${OPENAI_API_KEY:your-api-key-here}
       model: "gpt-5-nano"
       max-tokens: 256
       temperature: 0.1
