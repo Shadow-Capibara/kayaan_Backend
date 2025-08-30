@@ -10,6 +10,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -280,6 +281,45 @@ public class AIGenerationController {
                 "success", false,
                 "message", "Failed to get saved content: " + e.getMessage(),
                 "error", "CONTENT_RETRIEVAL_FAILED"
+            ));
+        }
+    }
+
+    /**
+     * Delete saved content
+     * DELETE /api/ai/generation/content/{contentId}
+     */
+    @DeleteMapping("/content/{contentId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> deleteSavedContent(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long contentId
+    ) {
+        try {
+            log.info("Deleting saved content: {} by user: {}", contentId, user.getId());
+            
+            boolean deleted = aiGenerationService.deleteSavedContent(contentId, user.getId().longValue());
+            
+            if (deleted) {
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Content deleted successfully",
+                    "data", contentId
+                ));
+            } else {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Failed to delete content",
+                    "error", "CONTENT_DELETE_FAILED"
+                ));
+            }
+            
+        } catch (Exception e) {
+            log.error("Error deleting saved content: {}", contentId, e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "Failed to delete content: " + e.getMessage(),
+                "error", "CONTENT_DELETE_FAILED"
             ));
         }
     }

@@ -142,7 +142,7 @@ public class OpenAIService {
             case "note":
                 return baseMessage + " MUST include topic field. Generate: { \"topic\": \"Topic Title in English\", \"type\": \"note\", \"content\": [{ \"feature\": \"Section Title\", \"description\": \"Detailed explanation in English\" }] }";
             case "quiz":
-                return baseMessage + " Create quiz with mixed question types. Include: multiple-choice (with 4 options), true-false, and open-ended questions. Format: {\"topic\":\"Quiz Topic in English\",\"type\":\"quiz\",\"questions\":[{\"id\":1,\"type\":\"multiple-choice\",\"question\":\"Question in English?\",\"options\":[\"Option A\",\"Option B\",\"Option C\",\"Option D\"],\"correctAnswer\":\"Option A\"},{\"id\":2,\"type\":\"true-false\",\"question\":\"Statement in English?\",\"correctAnswer\":\"true\"},{\"id\":3,\"type\":\"open-ended\",\"question\":\"Open question in English?\",\"correctAnswer\":\"Sample answer in English\"}]}";
+                return baseMessage + " Create quiz questions based on user request. Support multiple question types: multiple-choice (with 4 options), true-false, and open-ended. Follow the exact number and type requested by user. Format: {\"topic\":\"Quiz Topic in English\",\"type\":\"quiz\",\"questions\":[{\"id\":1,\"type\":\"multiple-choice\",\"question\":\"Question in English?\",\"options\":[\"Option A\",\"Option B\",\"Option C\",\"Option D\"],\"correctAnswer\":\"Option A\"}]}";
             case "flashcard":
                 return baseMessage + " MUST include topic field. Generate: { \"topic\": \"Flashcard Set Title in English\", \"type\": \"flashcard\", \"flashcards\": [{ \"question\": \"Question in English\", \"answer\": \"Answer in English\" }] }";
             case "summary":
@@ -175,7 +175,7 @@ public class OpenAIService {
         message.append("\n\nIMPORTANT: Response must be valid JSON with proper structure including:");
         message.append("\n- 'topic' field with descriptive topic name in English");
         message.append("\n- 'type' field indicating content type");
-        message.append("\n- For quiz: Mix 3 question types - multiple-choice (4 options), true-false, open-ended");
+        message.append("\n- For quiz: Follow user's specific request for question type and number");
         message.append("\n- Use English language for ALL content fields");
         message.append("\n- Make content educational and engaging in English");
         message.append("\n\nResponse format: Valid JSON object only.");
