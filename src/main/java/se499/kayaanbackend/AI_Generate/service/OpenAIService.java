@@ -155,7 +155,7 @@ public class OpenAIService {
     /**
      * Build user message for OpenAI API
      * @param prompt User prompt
-     * @param additionalContext Additional context
+     * @param additionalContext Additional context (file content)
      * @return User message
      */
     private String buildUserMessage(String prompt, String additionalContext) {
@@ -163,21 +163,33 @@ public class OpenAIService {
         String truncatedPrompt = prompt.length() > 1000 ? 
             prompt.substring(0, 1000) + "..." : prompt;
         
-        StringBuilder message = new StringBuilder(truncatedPrompt);
+        StringBuilder message = new StringBuilder();
         
+        // If we have file content, prioritize it and make it the main source
         if (additionalContext != null && !additionalContext.trim().isEmpty()) {
-            String truncatedContext = additionalContext.length() > 500 ? 
-                additionalContext.substring(0, 500) + "..." : additionalContext;
-            message.append("\n\nContext: ").append(truncatedContext);
+            String truncatedContext = additionalContext.length() > 4000 ? 
+                additionalContext.substring(0, 4000) + "\n[Content truncated due to length limit]" : additionalContext;
+            
+            message.append("IMPORTANT: Please generate the content based EXCLUSIVELY on the following document content. ");
+            message.append("Do NOT use external knowledge or unrelated topics like photosynthesis unless they appear in the document.\n\n");
+            message.append("=== DOCUMENT CONTENT ===\n");
+            message.append(truncatedContext);
+            message.append("\n=== END OF DOCUMENT ===\n\n");
+            message.append("User Instructions: ").append(truncatedPrompt);
+            message.append("\n\nPlease create the requested content type ONLY from the document content above. ");
+            message.append("Focus on the actual topics, concepts, and information present in the document.");
+        } else {
+            message.append(truncatedPrompt);
         }
         
         // Add structured JSON schema requirements
         message.append("\n\nIMPORTANT: Response must be valid JSON with proper structure including:");
-        message.append("\n- 'topic' field with descriptive topic name in English");
+        message.append("\n- 'topic' field with descriptive topic name in English based on the content");
         message.append("\n- 'type' field indicating content type");
         message.append("\n- For quiz: Follow user's specific request for question type and number");
         message.append("\n- Use English language for ALL content fields");
         message.append("\n- Make content educational and engaging in English");
+        message.append("\n- Base ALL content on the provided document (if any)");
         message.append("\n\nResponse format: Valid JSON object only.");
         
         return message.toString();

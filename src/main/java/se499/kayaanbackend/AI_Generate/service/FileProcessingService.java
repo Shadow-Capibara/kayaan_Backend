@@ -1,14 +1,19 @@
 package se499.kayaanbackend.AI_Generate.service;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
+import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service for processing uploaded files (PDF, DOCX, TXT, Images)
@@ -78,8 +83,6 @@ public class FileProcessingService {
      * @throws IOException If processing fails
      */
     private String processDocument(MultipartFile file, String contentType) throws IOException {
-        String fileName = file.getOriginalFilename();
-        
         if ("text/plain".equals(contentType)) {
             // Process TXT file
             return processTextFile(file);
@@ -113,33 +116,91 @@ public class FileProcessingService {
     }
     
     /**
-     * Process PDF file
+     * Process PDF file using Apache PDFBox
      * @param file PDF file
      * @return Extracted text
      * @throws IOException If processing fails
      */
     private String processPdfFile(MultipartFile file) throws IOException {
-        // TODO: Implement PDF text extraction using Apache PDFBox or similar library
-        // For now, return placeholder text
-        log.warn("PDF processing not yet implemented, returning placeholder text");
-        
-        return "PDF content extraction not yet implemented. " +
-               "File: " + file.getOriginalFilename() + " (" + file.getSize() + " bytes)";
+        PDDocument document = null;
+        try {
+            document = PDDocument.load(file.getInputStream());
+            
+            if (document.isEncrypted()) {
+                log.warn("PDF file is encrypted, cannot extract text: {}", file.getOriginalFilename());
+                return "PDF file is encrypted and cannot be processed. Please provide an unencrypted version.";
+            }
+            
+            PDFTextStripper textStripper = new PDFTextStripper();
+            String text = textStripper.getText(document);
+            
+            // Clean up the extracted text
+            text = text.trim();
+            if (text.isEmpty()) {
+                log.warn("No text content found in PDF: {}", file.getOriginalFilename());
+                return "No text content found in the PDF file. It may be image-based or empty.";
+            }
+            
+            log.info("Successfully extracted text from PDF: {} ({} characters)", 
+                    file.getOriginalFilename(), text.length());
+            
+            // Limit text length to prevent token overuse (max 5000 characters)
+            if (text.length() > 5000) {
+                text = text.substring(0, 5000) + "\n[Text truncated due to length limit]";
+                log.info("PDF text truncated to 5000 characters");
+            }
+            
+            return text;
+            
+        } catch (Exception e) {
+            log.error("Failed to extract text from PDF: {}", file.getOriginalFilename(), e);
+            throw new IOException("Failed to process PDF file: " + e.getMessage(), e);
+        } finally {
+            if (document != null) {
+                try {
+                    document.close();
+                } catch (Exception closeException) {
+                    log.warn("Failed to close PDF document", closeException);
+                }
+            }
+        }
     }
     
     /**
-     * Process DOCX file
+     * Process DOCX file using Apache POI
      * @param file DOCX file
      * @return Extracted text
      * @throws IOException If processing fails
      */
     private String processDocxFile(MultipartFile file) throws IOException {
-        // TODO: Implement DOCX text extraction using Apache POI or similar library
-        // For now, return placeholder text
-        log.warn("DOCX processing not yet implemented, returning placeholder text");
-        
-        return "DOCX content extraction not yet implemented. " +
-               "File: " + file.getOriginalFilename() + " (" + file.getSize() + " bytes)";
+        try (InputStream inputStream = file.getInputStream();
+             XWPFDocument document = new XWPFDocument(inputStream);
+             XWPFWordExtractor extractor = new XWPFWordExtractor(document)) {
+            
+            String text = extractor.getText();
+            
+            // Clean up the extracted text
+            text = text.trim();
+            if (text.isEmpty()) {
+                log.warn("No text content found in DOCX: {}", file.getOriginalFilename());
+                return "No text content found in the DOCX file.";
+            }
+            
+            log.info("Successfully extracted text from DOCX: {} ({} characters)", 
+                    file.getOriginalFilename(), text.length());
+            
+            // Limit text length to prevent token overuse (max 5000 characters)
+            if (text.length() > 5000) {
+                text = text.substring(0, 5000) + "\n[Text truncated due to length limit]";
+                log.info("DOCX text truncated to 5000 characters");
+            }
+            
+            return text;
+            
+        } catch (Exception e) {
+            log.error("Failed to extract text from DOCX: {}", file.getOriginalFilename(), e);
+            throw new IOException("Failed to process DOCX file: " + e.getMessage(), e);
+        }
     }
     
     /**

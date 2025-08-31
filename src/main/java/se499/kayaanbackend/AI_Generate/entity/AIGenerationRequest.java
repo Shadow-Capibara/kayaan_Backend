@@ -28,6 +28,9 @@ public class AIGenerationRequest {
     @Column(name = "prompt_text", nullable = false, columnDefinition = "TEXT")
     private String promptText;
     
+    @Column(name = "additional_context", columnDefinition = "LONGTEXT")
+    private String additionalContext; // File content or other context data
+    
     @Enumerated(EnumType.STRING)
     @Column(name = "output_format", nullable = false)
     private ContentType outputFormat; // FLASHCARD, QUIZ, NOTE

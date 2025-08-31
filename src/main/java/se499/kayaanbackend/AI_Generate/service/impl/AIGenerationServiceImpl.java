@@ -26,6 +26,7 @@ import se499.kayaanbackend.AI_Generate.repository.AIGenerationRequestRepository;
 import se499.kayaanbackend.AI_Generate.service.AIGenerationRateLimitService;
 import se499.kayaanbackend.AI_Generate.service.AIGenerationService;
 import se499.kayaanbackend.AI_Generate.service.ContentTypeValidationService;
+import se499.kayaanbackend.AI_Generate.service.FileProcessingService;
 import se499.kayaanbackend.AI_Generate.service.OpenAIService;
 import se499.kayaanbackend.security.user.User;
 import se499.kayaanbackend.security.user.UserDao;
@@ -45,6 +46,7 @@ public class AIGenerationServiceImpl implements AIGenerationService {
     private final OpenAIService openAIService;
     private final ContentTypeValidationService contentTypeValidationService;
     private final AIGenerationRateLimitService rateLimitService;
+    private final FileProcessingService fileProcessingService;
 
     @Override
     @Transactional
@@ -64,6 +66,23 @@ public class AIGenerationServiceImpl implements AIGenerationService {
                 throw new RuntimeException("Rate limit exceeded. Please try again later.");
             }
             
+            // Process uploaded file if present
+            String fileContent = null;
+            if (dto.getUploadedFile() != null && !dto.getUploadedFile().isEmpty()) {
+                try {
+                    log.info("Processing uploaded file: {} (size: {} bytes)", 
+                            dto.getUploadedFile().getOriginalFilename(), 
+                            dto.getUploadedFile().getSize());
+                    
+                    fileContent = fileProcessingService.processFile(dto.getUploadedFile());
+                    log.info("File processed successfully, extracted {} characters", fileContent.length());
+                    
+                } catch (Exception e) {
+                    log.error("Failed to process uploaded file: {}", dto.getUploadedFile().getOriginalFilename(), e);
+                    throw new RuntimeException("Failed to process uploaded file: " + e.getMessage());
+                }
+            }
+            
             // Create generation request
             AIGenerationRequest request = AIGenerationRequest.builder()
                 .user(user)
@@ -75,6 +94,12 @@ public class AIGenerationServiceImpl implements AIGenerationService {
                 .retryCount(0)  // Set default retry count
                 .createdAt(LocalDateTime.now())
                 .build();
+            
+            // Set additional context from file if available
+            if (fileContent != null && !fileContent.trim().isEmpty()) {
+                request.setAdditionalContext(fileContent);
+                log.info("File content added to request as additional context");
+            }
             
             AIGenerationRequest savedRequest = generationRequestRepository.save(request);
             
@@ -107,11 +132,16 @@ public class AIGenerationServiceImpl implements AIGenerationService {
                 request.setStartedAt(LocalDateTime.now());
                 generationRequestRepository.save(request);
                 
-                // Generate content using OpenAI
+                // Generate content using OpenAI with file content as additional context
+                String additionalContext = request.getAdditionalContext() != null ? 
+                    request.getAdditionalContext() : "";
+                
+                log.info("Generating content with context length: {} characters", additionalContext.length());
+                
                 String generatedContent = openAIService.generateContent(
                     request.getPromptText(),
                     request.getOutputFormat().getValue(),
-                    "", // additionalContext - not stored in entity yet
+                    additionalContext,
                     userId.toString()
                 );
                 
