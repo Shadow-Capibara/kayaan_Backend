@@ -231,7 +231,9 @@ public class ContentTransformationService {
             }
                 
             case OPEN_ENDED:
-                // No options for open-ended questions
+                // For open-ended questions, explicitly set options to null
+                // This helps frontend distinguish from multiple choice questions
+                transformed.put("options", null);
                 break;
         }
         

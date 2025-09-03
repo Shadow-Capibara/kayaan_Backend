@@ -329,11 +329,41 @@ public class ManualGeneratedContentServiceImpl implements ManualGeneratedContent
                 return false;
             }
             
-            // Validate first question as sample
-            JsonNode firstQuestion = questions.get(0);
-            if (!firstQuestion.has("question") && !firstQuestion.has("text")) {
-                log.debug("Quiz question missing question text");
-                return false;
+            // Validate each question structure
+            for (int i = 0; i < questions.size(); i++) {
+                JsonNode question = questions.get(i);
+                log.debug("Validating question {}: {}", i + 1, question.toString());
+                
+                // Check required fields
+                if (!question.has("question") && !question.has("text")) {
+                    log.debug("Question {} missing question text", i + 1);
+                    return false;
+                }
+                
+                // Check question type if present
+                if (question.has("type")) {
+                    String questionType = question.get("type").asText().toLowerCase();
+                    log.debug("Question {} type: {}", i + 1, questionType);
+                    
+                    // Validate based on question type
+                    if ("open-ended".equals(questionType) || "open_ended".equals(questionType)) {
+                        // Open-ended questions should not have options or have empty/null options
+                        if (question.has("options")) {
+                            JsonNode options = question.get("options");
+                            if (options.isArray() && options.size() > 0) {
+                                log.debug("Question {} is open-ended but has non-empty options", i + 1);
+                                // This is a warning but not a validation failure
+                                log.warn("Open-ended question {} has options - this may cause frontend confusion", i + 1);
+                            }
+                        }
+                    } else if ("multiple-choice".equals(questionType) || "multiple_choice".equals(questionType)) {
+                        // Multiple choice questions should have options
+                        if (!question.has("options") || !question.get("options").isArray() || question.get("options").size() == 0) {
+                            log.debug("Question {} is multiple-choice but missing options", i + 1);
+                            return false;
+                        }
+                    }
+                }
             }
         }
         
