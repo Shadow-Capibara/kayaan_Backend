@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -15,5 +17,5 @@ public class FlashcardRequestDTO {
     private String backText;
     private String subject;
     private String difficulty;
-    private String tags;
+    private List<String> tags; // Changed from String to List<String> to match Frontend
 }

@@ -20,7 +20,7 @@ import se499.kayaanbackend.Manual_Generate.Quiz.dto.QuizResponseDTO;
 import se499.kayaanbackend.Manual_Generate.Quiz.service.QuizService;
 
 @RestController
-@RequestMapping("/api/manual/quiz")
+@RequestMapping("/api/quiz")
 @RequiredArgsConstructor
 public class QuizController {
 
@@ -44,6 +44,22 @@ public class QuizController {
     public ResponseEntity<List<QuizResponseDTO>> getAllQuizzesForUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
+
+        List<QuizResponseDTO> quizzes = quizService.getAllQuizzesForUser(username);
+        return ResponseEntity.ok(quizzes);
+    }
+
+    // Frontend compatible endpoint
+    @GetMapping("/user/{username}")
+    public ResponseEntity<List<QuizResponseDTO>> getAllQuizzesForUserByUsername(
+            @PathVariable String username) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String currentUser = auth.getName();
+        
+        // Security check - only allow users to access their own quizzes
+        if (!currentUser.equals(username)) {
+            return ResponseEntity.status(403).build();
+        }
 
         List<QuizResponseDTO> quizzes = quizService.getAllQuizzesForUser(username);
         return ResponseEntity.ok(quizzes);

@@ -58,6 +58,14 @@ public class SecurityConfiguration {
                       .requestMatchers(HttpMethod.PUT, "/api/users/*/avatar-url").authenticated()
                       .requestMatchers("/api/users/*/**").authenticated()
                       
+                      // Manual Generation endpoints
+                      .requestMatchers("/api/quiz/**").authenticated()
+                      .requestMatchers("/api/note/**").authenticated()
+                      .requestMatchers("/api/flashcard/**").authenticated()
+                      .requestMatchers("/api/content/manual/test").permitAll() // Test endpoint for validation
+                      .requestMatchers("/api/content/manual/**").authenticated() // Manual content API
+                      .requestMatchers("/api/content/**").authenticated() // Other content API
+                      
                       // Study Group endpoints - ต้องมี authentication
                       .requestMatchers("/api/groups/**").authenticated()
                       .requestMatchers("/api/study-groups/**").authenticated()

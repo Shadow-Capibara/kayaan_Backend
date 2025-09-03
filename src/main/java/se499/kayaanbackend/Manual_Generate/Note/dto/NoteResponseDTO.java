@@ -5,6 +5,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -17,5 +20,7 @@ public class NoteResponseDTO {
     private String content;
     private String subject;
     private String difficulty;
-    private String tags;
+    private List<String> tags; // Changed to List<String> for Frontend compatibility
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }
