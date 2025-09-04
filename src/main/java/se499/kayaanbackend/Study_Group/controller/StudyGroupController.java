@@ -101,4 +101,14 @@ public class StudyGroupController {
         
         return ResponseEntity.ok(studyGroupService.generateInvite(currentUser.getId(), groupId, expiryDays));
     }
+    
+    /**
+     * ดึงรหัสเชิญของกลุ่ม (endpoint สำหรับ Frontend)
+     */
+    @GetMapping("/{groupId}/invite-code")
+    public ResponseEntity<InviteResponse> getGroupInviteCode(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Integer groupId) {
+        return ResponseEntity.ok(studyGroupService.getGroupInviteCode(currentUser.getId(), groupId));
+    }
 }

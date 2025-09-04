@@ -1,92 +1,63 @@
 package se499.kayaanbackend.Study_Group.exception;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-@RestControllerAdvice
+@RestControllerAdvice(basePackages = "se499.kayaanbackend.Study_Group")
 public class StudyGroupExceptionHandler {
-
+    
     @ExceptionHandler(StudyGroupException.class)
-    public ResponseEntity<Map<String, String>> handleStudyGroupException(StudyGroupException e) {
-        return ResponseEntity.badRequest()
-                .body(Map.of("error", "StudyGroupException", "message", e.getMessage()));
+    public ResponseEntity<Map<String, Object>> handleStudyGroupException(StudyGroupException ex) {
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("message", ex.getMessage());
+        errorResponse.put("error", "StudyGroupException");
+        errorResponse.put("status", ex.getStatusCode());
+        errorResponse.put("timestamp", LocalDateTime.now());
+        
+        HttpStatus httpStatus = HttpStatus.valueOf(ex.getStatusCode());
+        return ResponseEntity.status(httpStatus).body(errorResponse);
     }
-
-    // Security Exceptions
-    @ExceptionHandler(GroupAccessDeniedException.class)
-    public ResponseEntity<Map<String, Object>> handleGroupAccessDenied(GroupAccessDeniedException e) {
-        Map<String, Object> response = Map.of(
-            "error", "GroupAccessDeniedException",
-            "errorCode", e.getErrorCode(),
-            "message", e.getMessage(),
-            "httpStatus", e.getHttpStatus()
-        );
-        return ResponseEntity.status(e.getHttpStatus()).body(response);
+    
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<Map<String, Object>> handleAuthenticationException(AuthenticationException ex) {
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("message", "Authentication failed");
+        errorResponse.put("error", "AuthenticationException");
+        errorResponse.put("status", 401);
+        errorResponse.put("timestamp", LocalDateTime.now());
+        errorResponse.put("details", "Please provide valid JWT token in Authorization header");
+        
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
-
-    @ExceptionHandler(ContentAccessDeniedException.class)
-    public ResponseEntity<Map<String, Object>> handleContentAccessDenied(ContentAccessDeniedException e) {
-        Map<String, Object> response = Map.of(
-            "error", "ContentAccessDeniedException",
-            "errorCode", e.getErrorCode(),
-            "message", e.getMessage(),
-            "httpStatus", e.getHttpStatus()
-        );
-        return ResponseEntity.status(e.getHttpStatus()).body(response);
+    
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleAccessDeniedException(AccessDeniedException ex) {
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("message", "Access denied");
+        errorResponse.put("error", "AccessDeniedException");
+        errorResponse.put("status", 403);
+        errorResponse.put("timestamp", LocalDateTime.now());
+        errorResponse.put("details", "You don't have permission to perform this action");
+        
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
     }
-
-    @ExceptionHandler(InvalidInviteCodeException.class)
-    public ResponseEntity<Map<String, Object>> handleInvalidInviteCode(InvalidInviteCodeException e) {
-        Map<String, Object> response = Map.of(
-            "error", "InvalidInviteCodeException",
-            "errorCode", e.getErrorCode(),
-            "message", e.getMessage(),
-            "httpStatus", e.getHttpStatus()
-        );
-        return ResponseEntity.status(e.getHttpStatus()).body(response);
-    }
-
-    @ExceptionHandler(ActionConfirmationRequiredException.class)
-    public ResponseEntity<Map<String, Object>> handleActionConfirmationRequired(ActionConfirmationRequiredException e) {
-        Map<String, Object> response = Map.of(
-            "error", "ActionConfirmationRequiredException",
-            "errorCode", e.getErrorCode(),
-            "message", e.getMessage(),
-            "httpStatus", e.getHttpStatus(),
-            "confirmationToken", e.getConfirmationToken()
-        );
-        return ResponseEntity.status(e.getHttpStatus()).body(response);
-    }
-
-    @ExceptionHandler(RateLimitExceededException.class)
-    public ResponseEntity<Map<String, Object>> handleRateLimitExceeded(RateLimitExceededException e) {
-        Map<String, Object> response = Map.of(
-            "error", "RateLimitExceededException",
-            "errorCode", e.getErrorCode(),
-            "message", e.getMessage(),
-            "httpStatus", e.getHttpStatus(),
-            "actionType", e.getActionType(),
-            "resetTime", e.getResetTime()
-        );
-        return ResponseEntity.status(e.getHttpStatus()).body(response);
-    }
-
-    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public Map<String, String> handleConstraint(Exception e) {
-        return Map.of("error", "constraint", 
-                     "message", String.valueOf(e.getCause() != null ? e.getCause().getMessage() : e.getMessage()));
-    }
-
-    @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public Map<String, String> handleAny(Exception e) {
-        return Map.of("error", e.getClass().getSimpleName(), 
-                     "message", String.valueOf(e.getMessage()));
+    
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("message", ex.getMessage());
+        errorResponse.put("error", "RuntimeException");
+        errorResponse.put("status", 400);
+        errorResponse.put("timestamp", LocalDateTime.now());
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 }

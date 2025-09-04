@@ -2,7 +2,6 @@ package se499.kayaanbackend.Study_Group.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -15,6 +14,7 @@ import se499.kayaanbackend.Study_Group.StudyGroup;
 import se499.kayaanbackend.Study_Group.dto.CreateGroupRequest;
 import se499.kayaanbackend.Study_Group.dto.InviteResponse;
 import se499.kayaanbackend.Study_Group.dto.StudyGroupResponse;
+import se499.kayaanbackend.Study_Group.exception.StudyGroupException;
 import se499.kayaanbackend.Study_Group.repository.GroupInviteRepository;
 import se499.kayaanbackend.Study_Group.repository.GroupMemberRepository;
 import se499.kayaanbackend.Study_Group.repository.StudyGroupRepository;
@@ -55,6 +55,14 @@ public class StudyGroupServiceImpl implements StudyGroupService {
         
         groupMemberRepository.save(ownerMember);
         
+        // Generate invite token automatically for new group
+        try {
+            generateInvite(currentUserId, savedGroup.getId(), 30); // 30 days expiry
+        } catch (Exception e) {
+            // Log error but don't fail group creation
+            System.err.println("Failed to generate invite token for group " + savedGroup.getId() + ": " + e.getMessage());
+        }
+        
         return mapToResponse(savedGroup);
     }
     
@@ -87,18 +95,22 @@ public class StudyGroupServiceImpl implements StudyGroupService {
     
     @Override
     public StudyGroupResponse joinByToken(Integer currentUserId, String token) {
+        // Try to find invite by token or invite code
         GroupInvite invite = groupInviteRepository.findValidByToken(token, LocalDateTime.now())
-                .orElseThrow(() -> new RuntimeException("Invalid or expired invite token"));
+                .orElseGet(() -> groupInviteRepository.findByInviteCodeAndIsActiveTrue(token)
+                        .orElseThrow(() -> new StudyGroupException("Invalid or expired invite token", 400)));
         
         // Check if user is already a member
         if (groupMemberRepository.existsByGroupIdAndUserId(invite.getGroupId(), currentUserId)) {
-            throw new RuntimeException("User is already a member of this group");
+            throw new StudyGroupException("User is already a member of this group", 400);
         }
         
-        // Check if user has a pending invitation
-        if (groupInviteRepository.existsByGroupIdAndCreatedByAndRevokedFalse(invite.getGroupId(), currentUserId)) {
-            throw new RuntimeException("User already has a pending invitation to this group");
-        }
+        // Check if user has a pending invitation (only if they created it themselves)
+        // This check is not needed for joining via invite code - users should be able to join
+        // groups they didn't create using valid invite codes
+        // if (groupInviteRepository.existsByGroupIdAndCreatedByAndRevokedFalse(invite.getGroupId(), currentUserId)) {
+        //     throw new RuntimeException("User already has a pending invitation to this group");
+        // }
         
         // Add user as member
         GroupMember member = GroupMember.builder()
@@ -158,29 +170,72 @@ public class StudyGroupServiceImpl implements StudyGroupService {
             throw new RuntimeException("Access denied: User is not a member of this group");
         }
         
-        String token = UUID.randomUUID().toString();
+        // Generate short, memorable invite code (6 characters)
+        String inviteCode = generateShortInviteCode();
         LocalDateTime expiresAt = LocalDateTime.now().plusDays(expiryDays);
         
         GroupInvite invite = GroupInvite.builder()
                 .groupId(groupId)
-                .token(token)
+                .token(inviteCode) // Use invite code as token
+                .inviteCode(inviteCode)
                 .expiresAt(expiresAt)
                 .createdBy(currentUserId)
                 .createdAt(LocalDateTime.now())
                 .revoked(false)
+                .isActive(true)
                 .build();
         
         groupInviteRepository.save(invite);
         
-        return new InviteResponse(token, expiresAt);
+        return new InviteResponse(inviteCode, expiresAt, null, 0);
+    }
+    
+    /**
+     * Generate short, memorable invite code (6 characters)
+     */
+    private String generateShortInviteCode() {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        StringBuilder code = new StringBuilder();
+        for (int i = 0; i < 6; i++) {
+            code.append(chars.charAt((int) (Math.random() * chars.length())));
+        }
+        return code.toString();
     }
     
     @Override
     public InviteResponse validateInviteToken(String token) {
+        // Try to find invite by token or invite code
         GroupInvite invite = groupInviteRepository.findValidByToken(token, LocalDateTime.now())
-                .orElseThrow(() -> new RuntimeException("Invalid or expired invite token"));
+                .orElseGet(() -> groupInviteRepository.findByInviteCodeAndIsActiveTrue(token)
+                        .orElseThrow(() -> new RuntimeException("Invalid or expired invite token")));
         
-        return new InviteResponse(token, invite.getExpiresAt());
+        return new InviteResponse(token, invite.getExpiresAt(), invite.getMaxUses(), invite.getCurrentUses());
+    }
+    
+    @Override
+    public InviteResponse getGroupInviteCode(Integer currentUserId, Integer groupId) {
+        // Check if user is a member
+        if (!groupMemberRepository.existsByGroupIdAndUserId(groupId, currentUserId)) {
+            throw new RuntimeException("Access denied: User is not a member of this group");
+        }
+        
+        // Find existing active invite code for the group
+        List<GroupInvite> activeInvites = groupInviteRepository.findValidByGroupId(groupId, LocalDateTime.now());
+        
+        if (activeInvites.isEmpty()) {
+            // Generate new invite code if none exists
+            return generateInvite(currentUserId, groupId, 30); // Default 30 days expiry
+        }
+        
+        // Return the first active invite code
+        GroupInvite activeInvite = activeInvites.get(0);
+        String code = activeInvite.getInviteCode() != null ? activeInvite.getInviteCode() : activeInvite.getToken();
+        return new InviteResponse(
+            code,
+            activeInvite.getExpiresAt(),
+            activeInvite.getMaxUses(),
+            activeInvite.getCurrentUses()
+        );
     }
     
     private StudyGroupResponse mapToResponse(StudyGroup group) {

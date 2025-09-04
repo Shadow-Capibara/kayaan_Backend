@@ -124,8 +124,17 @@ public class GroupMemberServiceImpl implements GroupMemberService {
     }
     
     private MemberResponse mapToResponse(GroupMember member) {
+        // Fetch user details from database
+        var user = userRepository.findById(member.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found: " + member.getUserId()));
+        
         return new MemberResponse(
                 member.getUserId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getFirstname(),
+                user.getLastname(),
+                user.getAvatarUrl(),
                 member.getRole(),
                 member.getJoinedAt()
         );

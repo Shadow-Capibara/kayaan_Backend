@@ -50,4 +50,9 @@ public interface StudyGroupService {
      * Validates an invite token without joining
      */
     InviteResponse validateInviteToken(String token);
+    
+    /**
+     * Gets the invite code for a group
+     */
+    InviteResponse getGroupInviteCode(Integer currentUserId, Integer groupId);
 }

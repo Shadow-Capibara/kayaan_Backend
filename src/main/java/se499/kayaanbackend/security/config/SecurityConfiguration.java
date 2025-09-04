@@ -17,7 +17,10 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -30,6 +33,8 @@ public class SecurityConfiguration {
   private final JwtAuthenticationFilter jwtAuthFilter;
   private final AuthenticationProvider authenticationProvider;
   private final LogoutHandler logoutHandler;
+  private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+  private final CustomAccessDeniedHandler accessDeniedHandler;
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -83,6 +88,9 @@ public class SecurityConfiguration {
               .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
               .authenticationProvider(authenticationProvider)
               .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+              .exceptionHandling(exceptions -> exceptions
+                      .accessDeniedHandler(accessDeniedHandler)
+              )
               .logout(logout -> logout
                       .logoutUrl("/api/v1/auth/logout")
                       .addLogoutHandler(logoutHandler)
@@ -127,5 +135,16 @@ public class SecurityConfiguration {
         source.registerCorsConfiguration("/**", configuration);
         
         return source;
+    }
+    
+    private boolean isPublicEndpoint(String requestURI) {
+        return requestURI.startsWith("/api/v1/auth/") || 
+               requestURI.startsWith("/api/auth/") ||
+               requestURI.equals("/authenticate") ||
+               requestURI.equals("/register") ||
+               requestURI.startsWith("/api/public/") ||
+               requestURI.equals("/api/ai/config/test") ||
+               requestURI.startsWith("/api/ai/debug/") ||
+               requestURI.equals("/api/themes");
     }
 }
