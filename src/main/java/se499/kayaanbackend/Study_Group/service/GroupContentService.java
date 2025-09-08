@@ -3,6 +3,8 @@ package se499.kayaanbackend.Study_Group.service;
 import java.util.List;
 
 import se499.kayaanbackend.Study_Group.dto.ResourceResponse;
+import se499.kayaanbackend.Study_Group.dto.ShareContentRequest;
+import se499.kayaanbackend.Study_Group.dto.SharedContentResponse;
 import se499.kayaanbackend.Study_Group.dto.UploadResourceCompleteRequest;
 import se499.kayaanbackend.Study_Group.dto.UploadResourceInitRequest;
 import se499.kayaanbackend.Study_Group.dto.UploadResourceInitResponse;
@@ -13,6 +15,11 @@ public interface GroupContentService {
      * Lists all resources in a group with search and filtering
      */
     List<ResourceResponse> listResources(Integer currentUserId, Integer groupId, String search, String type, int page, int size);
+    
+    /**
+     * Gets a specific resource by ID
+     */
+    ResourceResponse getResource(Integer currentUserId, Integer groupId, Long resourceId);
     
     /**
      * Initializes an upload by creating a signed URL
@@ -34,4 +41,9 @@ public interface GroupContentService {
      */
     ResourceResponse updateResource(Integer currentUserId, Integer groupId, Long resourceId,
             String title, String description, List<String> tags);
+    
+    /**
+     * Shares interactive content (flashcards, quiz, notes) to a group
+     */
+    SharedContentResponse shareContent(Integer currentUserId, Integer groupId, ShareContentRequest request);
 }

@@ -15,11 +15,14 @@ import lombok.RequiredArgsConstructor;
 import se499.kayaanbackend.Study_Group.GroupContent;
 import se499.kayaanbackend.Study_Group.GroupMember;
 import se499.kayaanbackend.Study_Group.dto.ResourceResponse;
+import se499.kayaanbackend.Study_Group.dto.ShareContentRequest;
+import se499.kayaanbackend.Study_Group.dto.SharedContentResponse;
 import se499.kayaanbackend.Study_Group.dto.UploadResourceCompleteRequest;
 import se499.kayaanbackend.Study_Group.dto.UploadResourceInitRequest;
 import se499.kayaanbackend.Study_Group.dto.UploadResourceInitResponse;
 import se499.kayaanbackend.Study_Group.repository.GroupContentRepository;
 import se499.kayaanbackend.Study_Group.repository.GroupMemberRepository;
+import se499.kayaanbackend.security.user.UserRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +31,7 @@ public class GroupContentServiceImpl implements GroupContentService {
     
     private final GroupContentRepository groupContentRepository;
     private final GroupMemberRepository groupMemberRepository;
+    private final UserRepository userRepository;
     private final GroupStorageService groupStorageService;
     private final GroupNotificationService notificationService;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -111,6 +115,25 @@ public class GroupContentServiceImpl implements GroupContentService {
     }
     
     @Override
+    public ResourceResponse getResource(Integer currentUserId, Integer groupId, Long resourceId) {
+        // Check if user is a member
+        if (!groupMemberRepository.existsByGroupIdAndUserId(groupId, currentUserId)) {
+            throw new RuntimeException("Access denied: User is not a member of this group");
+        }
+        
+        // Find the resource
+        GroupContent resource = groupContentRepository.findById(resourceId)
+                .orElseThrow(() -> new RuntimeException("Resource not found"));
+        
+        // Verify the resource belongs to the group
+        if (!resource.getGroupId().equals(groupId)) {
+            throw new RuntimeException("Resource not found in this group");
+        }
+        
+        return mapToResponse(resource);
+    }
+    
+    @Override
     public void deleteResource(Integer currentUserId, Integer groupId, Long resourceId) {
         // Check if user is a member
         if (!groupMemberRepository.existsByGroupIdAndUserId(groupId, currentUserId)) {
@@ -172,6 +195,9 @@ public class GroupContentServiceImpl implements GroupContentService {
     }
     
     private ResourceResponse mapToResponse(GroupContent content) {
+        // Get uploader name from group members
+        String uploaderName = getUploaderName(content.getGroupId(), content.getUploaderId());
+        
         return new ResourceResponse(
                 content.getId(),
                 content.getTitle(),
@@ -181,8 +207,23 @@ public class GroupContentServiceImpl implements GroupContentService {
                 content.getFileSize(),
                 deserializeTags(content.getTags()),
                 content.getUploaderId(),
-                content.getCreatedAt()
+                uploaderName,
+                content.getCreatedAt(),
+                content.getContentType(),
+                content.getContentData()
         );
+    }
+    
+    private String getUploaderName(Integer groupId, Integer uploaderId) {
+        try {
+            // Try to get user from UserRepository
+            return userRepository.findById(uploaderId)
+                    .map(user -> user.getUsername() != null ? user.getUsername() : "User " + uploaderId)
+                    .orElse("User " + uploaderId);
+        } catch (Exception e) {
+            // If any error occurs, return fallback name
+            return "User " + uploaderId;
+        }
     }
     
     private boolean isValidMimeType(String mimeType) {
@@ -230,5 +271,55 @@ public class GroupContentServiceImpl implements GroupContentService {
         } catch (JsonProcessingException e) {
             return List.of();
         }
+    }
+    
+    @Override
+    public SharedContentResponse shareContent(Integer currentUserId, Integer groupId, ShareContentRequest request) {
+        // Check if user is a member
+        if (!groupMemberRepository.existsByGroupIdAndUserId(groupId, currentUserId)) {
+            throw new RuntimeException("Access denied: User is not a member of this group");
+        }
+        
+        // Validate content type
+        if (request.contentType() == null || request.contentType().trim().isEmpty()) {
+            throw new RuntimeException("Content type is required");
+        }
+        
+        // Validate content data
+        if (request.contentData() == null || request.contentData().trim().isEmpty()) {
+            throw new RuntimeException("Content data is required");
+        }
+        
+        // Create GroupContent with content data
+        GroupContent content = GroupContent.builder()
+                .groupId(groupId)
+                .uploaderId(currentUserId)
+                .title(request.title())
+                .description(request.description())
+                .fileName("shared_content_" + request.contentId() + ".json")
+                .fileUrl("shared://content/" + request.contentId())
+                .mimeType("application/json")
+                .fileSize((long) request.contentData().length())
+                .tags(serializeTags(request.tags()))
+                .contentType(request.contentType())
+                .contentData(request.contentData())
+                .createdAt(LocalDateTime.now())
+                .build();
+        
+        GroupContent savedContent = groupContentRepository.save(content);
+        
+        // Notify group members about new content
+        notificationService.notifyContentUpdate(groupId, currentUserId, "new shared content");
+        
+        return new SharedContentResponse(
+                savedContent.getId(),
+                savedContent.getTitle(),
+                savedContent.getDescription(),
+                savedContent.getContentType(),
+                savedContent.getContentData(),
+                deserializeTags(savedContent.getTags()),
+                savedContent.getUploaderId(),
+                savedContent.getCreatedAt()
+        );
     }
 }

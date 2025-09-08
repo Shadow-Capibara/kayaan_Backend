@@ -135,6 +135,55 @@ public class AvatarController {
         }
     }
 
+    @PostMapping("/{id}/avatar/dicebear")
+    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
+    public ResponseEntity<?> generateDiceBearAvatar(
+            @PathVariable Long id,
+            @Valid @RequestBody DiceBearAvatarRequest request,
+            BindingResult br
+    ) {
+        // Handle validation errors
+        if (br.hasErrors()) {
+            Map<String, String> errors = br.getFieldErrors().stream()
+                .collect(Collectors.toMap(
+                    FieldError::getField,
+                    FieldError::getDefaultMessage
+                ));
+            
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Validation failed");
+            errorResponse.put("details", errors);
+            
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+        
+        try {
+            // Generate DiceBear URL
+            String diceBearUrl = String.format("https://api.dicebear.com/7.x/%s/svg?seed=%s", 
+                request.style(), request.seed());
+            
+            log.info("Generating DiceBear avatar for user {} with style: {}, seed: {}", 
+                    id, request.style(), request.seed());
+            
+            // Save the DiceBear URL directly to database (no Supabase storage)
+            AvatarDTO dto = avatarService.savePresetAvatar(id, diceBearUrl, 0);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("avatar", dto);
+            response.put("diceBearUrl", diceBearUrl);
+            response.put("style", request.style());
+            response.put("seed", request.seed());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Error generating DiceBear avatar for user {}: {}", id, e.getMessage(), e);
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
 
 
     private final HttpClient http = HttpClient.newBuilder()
@@ -198,4 +247,15 @@ public class AvatarController {
      * Request DTO for avatar URL update
      */
     public record AvatarUrlUpdateRequest(String path) {}
+    
+    /**
+     * Request DTO for DiceBear avatar generation
+     */
+    public record DiceBearAvatarRequest(
+        @NotBlank(message = "style must not be blank")
+        String style,
+        
+        @NotBlank(message = "seed must not be blank")
+        String seed
+    ) {}
 }

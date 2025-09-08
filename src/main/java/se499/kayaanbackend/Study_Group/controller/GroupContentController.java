@@ -16,10 +16,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
 import se499.kayaanbackend.Study_Group.dto.ResourceResponse;
+import se499.kayaanbackend.Study_Group.dto.ShareContentRequest;
+import se499.kayaanbackend.Study_Group.dto.SharedContentResponse;
+import se499.kayaanbackend.Study_Group.dto.UpdateResourceRequest;
 import se499.kayaanbackend.Study_Group.dto.UploadResourceCompleteRequest;
 import se499.kayaanbackend.Study_Group.dto.UploadResourceInitRequest;
 import se499.kayaanbackend.Study_Group.dto.UploadResourceInitResponse;
-import se499.kayaanbackend.Study_Group.dto.UpdateResourceRequest;
 import se499.kayaanbackend.Study_Group.service.GroupContentService;
 import se499.kayaanbackend.security.user.User;
 
@@ -40,6 +42,15 @@ public class GroupContentController {
             @RequestParam(defaultValue = "20") int size) {
         List<ResourceResponse> resources = groupContentService.listResources(currentUser.getId(), groupId, search, type, page, size);
         return ResponseEntity.ok(resources);
+    }
+    
+    @GetMapping("/{groupId}/resources/{resourceId}")
+    public ResponseEntity<ResourceResponse> getResource(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Integer groupId,
+            @PathVariable Long resourceId) {
+        ResourceResponse resource = groupContentService.getResource(currentUser.getId(), groupId, resourceId);
+        return ResponseEntity.ok(resource);
     }
     
     @PostMapping("/{groupId}/resources/upload-url")
@@ -85,5 +96,14 @@ public class GroupContentController {
                 currentUser.getId(), groupId, resourceId, 
                 request.title(), request.description(), request.tags());
         return ResponseEntity.ok(resource);
+    }
+    
+    @PostMapping("/{groupId}/resources/share-content")
+    public ResponseEntity<SharedContentResponse> shareContent(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Integer groupId,
+            @RequestBody ShareContentRequest request) {
+        SharedContentResponse response = groupContentService.shareContent(currentUser.getId(), groupId, request);
+        return ResponseEntity.ok(response);
     }
 }

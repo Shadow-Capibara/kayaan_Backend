@@ -80,7 +80,7 @@ avatar:
 # AI Configuration
 ai:
   openai:
-    api-key: ${OPENAI_API_KEY}
+    api-key: ${OPENAI_API_KEY:}
     model: ${OPENAI_MODEL:gpt-3.5-turbo}
     max-tokens: ${OPENAI_MAX_TOKENS:600}
     temperature: ${OPENAI_TEMPERATURE:0.1}

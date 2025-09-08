@@ -3,17 +3,13 @@ package se499.kayaanbackend.Study_Group.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public record ResourceResponse(
+public record SharedContentResponse(
     Long id,
     String title,
     String description,
-    String fileUrl,
-    String mimeType,
-    Long fileSize,
+    String contentType,
+    String contentData,
     List<String> tags,
     Integer uploaderId,
-    String uploaderName,
-    LocalDateTime createdAt,
-    String contentType,
-    String contentData
+    LocalDateTime createdAt
 ) {}

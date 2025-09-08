@@ -55,6 +55,12 @@ public class GroupContent {
     @Column(columnDefinition = "JSON")
     private String tags;
     
+    @Column(name = "content_type")
+    private String contentType;
+    
+    @Column(name = "content_data", columnDefinition = "LONGTEXT")
+    private String contentData;
+    
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
     
