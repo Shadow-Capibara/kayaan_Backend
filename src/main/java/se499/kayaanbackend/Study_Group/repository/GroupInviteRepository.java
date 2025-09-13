@@ -1,14 +1,16 @@
 package se499.kayaanbackend.Study_Group.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
-import se499.kayaanbackend.Study_Group.GroupInvite;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import se499.kayaanbackend.Study_Group.GroupInvite;
 
 @Repository
 public interface GroupInviteRepository extends JpaRepository<GroupInvite, Long> {
@@ -43,5 +45,9 @@ public interface GroupInviteRepository extends JpaRepository<GroupInvite, Long> 
     /**
      * ค้นหารหัสเชิญที่หมดอายุแล้ว
      */
+    
+    @Modifying
+    @Query("DELETE FROM GroupInvite gi WHERE gi.groupId = :groupId")
+    void deleteByGroupId(@Param("groupId") Integer groupId);
     List<GroupInvite> findByExpiresAtBefore(LocalDateTime dateTime);
 }

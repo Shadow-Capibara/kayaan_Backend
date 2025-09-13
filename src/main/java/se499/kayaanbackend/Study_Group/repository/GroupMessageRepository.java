@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -17,4 +18,8 @@ public interface GroupMessageRepository extends JpaRepository<GroupMessage, Long
     List<GroupMessage> findByStudyGroupIdOrderByCreatedAtDesc(@Param("groupId") Integer groupId, Pageable pageable);
     
     List<GroupMessage> findByStudyGroupIdOrderByCreatedAtDesc(Integer groupId);
+    
+    @Modifying
+    @Query("DELETE FROM GroupMessage gm WHERE gm.studyGroup.id = :groupId")
+    void deleteByStudyGroupId(@Param("groupId") Integer groupId);
 }

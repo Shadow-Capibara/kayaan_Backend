@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -25,4 +26,8 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, GroupM
     
     @Query("SELECT COUNT(gm) > 0 FROM GroupMember gm WHERE gm.groupId = :groupId AND gm.userId = :userId")
     boolean existsByGroupIdAndUserId(@Param("groupId") Integer groupId, @Param("userId") Integer userId);
+    
+    @Modifying
+    @Query("DELETE FROM GroupMember gm WHERE gm.groupId = :groupId")
+    void deleteByGroupId(@Param("groupId") Integer groupId);
 }

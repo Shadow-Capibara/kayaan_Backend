@@ -15,8 +15,10 @@ import se499.kayaanbackend.Study_Group.dto.CreateGroupRequest;
 import se499.kayaanbackend.Study_Group.dto.InviteResponse;
 import se499.kayaanbackend.Study_Group.dto.StudyGroupResponse;
 import se499.kayaanbackend.Study_Group.exception.StudyGroupException;
+import se499.kayaanbackend.Study_Group.repository.GroupContentRepository;
 import se499.kayaanbackend.Study_Group.repository.GroupInviteRepository;
 import se499.kayaanbackend.Study_Group.repository.GroupMemberRepository;
+import se499.kayaanbackend.Study_Group.repository.GroupMessageRepository;
 import se499.kayaanbackend.Study_Group.repository.StudyGroupRepository;
 import se499.kayaanbackend.security.user.User;
 import se499.kayaanbackend.security.user.UserRepository;
@@ -29,6 +31,8 @@ public class StudyGroupServiceImpl implements StudyGroupService {
     private final StudyGroupRepository studyGroupRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final GroupInviteRepository groupInviteRepository;
+    private final GroupContentRepository groupContentRepository;
+    private final GroupMessageRepository groupMessageRepository;
     private final UserRepository userRepository;
     private final GroupNotificationService notificationService;
     
@@ -160,6 +164,20 @@ public class StudyGroupServiceImpl implements StudyGroupService {
             throw new RuntimeException("Only the admin can delete the group");
         }
         
+        // Delete related data first (cascade delete)
+        // 1. Delete all group messages
+        groupMessageRepository.deleteByStudyGroupId(groupId);
+        
+        // 2. Delete all group content/resources
+        groupContentRepository.deleteByGroupId(groupId);
+        
+        // 3. Delete all group members
+        groupMemberRepository.deleteByGroupId(groupId);
+        
+        // 4. Delete all group invites
+        groupInviteRepository.deleteByGroupId(groupId);
+        
+        // 5. Finally delete the group
         studyGroupRepository.deleteById(groupId);
     }
     
