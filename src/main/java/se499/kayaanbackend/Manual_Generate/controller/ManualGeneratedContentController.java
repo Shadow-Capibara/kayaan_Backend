@@ -178,6 +178,16 @@ public class ManualGeneratedContentController {
                 content = manualGeneratedContentService.getContentByTypeForUser(user.getUsername(), contentType);
             }
             
+            // Debug logging for note content
+            if ("note".equals(type) || "all".equals(type)) {
+                content.stream()
+                    .filter(c -> "note".equals(c.getContentType()))
+                    .forEach(note -> {
+                        log.info("Debug - Note '{}' (ID: {}) content data: {}", 
+                                note.getContentTitle(), note.getId(), note.getContentData());
+                    });
+            }
+            
             log.info("Successfully retrieved {} manual content items for user: {}", 
                     content.size(), user.getUsername());
             return ResponseEntity.ok(content);

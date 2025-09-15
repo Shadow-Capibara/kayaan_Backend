@@ -2,7 +2,9 @@ package se499.kayaanbackend.Manual_Generate.controller;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -23,7 +25,6 @@ import se499.kayaanbackend.AI_Generate.service.AIGenerationService;
 import se499.kayaanbackend.Manual_Generate.dto.ManualGeneratedContentDTO;
 import se499.kayaanbackend.Manual_Generate.dto.UnifiedContentDTO;
 import se499.kayaanbackend.Manual_Generate.dto.UnifiedContentResponse;
-import se499.kayaanbackend.Manual_Generate.service.ContentTransformationService;
 import se499.kayaanbackend.Manual_Generate.service.ManualGeneratedContentService;
 import se499.kayaanbackend.security.user.User;
 
@@ -38,7 +39,7 @@ import se499.kayaanbackend.security.user.User;
 public class UnifiedContentController {
     
     private final AIGenerationService aiGenerationService;
-    private final ContentTransformationService transformationService;
+    // private final ContentTransformationService transformationService; // Currently unused
     private final ManualGeneratedContentService manualGeneratedContentService;
     
     /**
@@ -127,13 +128,24 @@ public class UnifiedContentController {
                     
                     // Get Note content from NEW ManualGeneratedContentService
                     if ("all".equals(contentType) || "note".equals(contentType)) {
+                        log.info("Fetching manual notes for user: {}", user.getUsername());
                         List<ManualGeneratedContentDTO> notes = manualGeneratedContentService.getContentByTypeForUser(user.getUsername(), se499.kayaanbackend.AI_Generate.entity.ContentType.NOTE);
+                        log.info("Found {} manual notes for user: {}", notes.size(), user.getUsername());
+                        
+                        // Log each note's content data for debugging
+                        for (ManualGeneratedContentDTO note : notes) {
+                            log.info("Note '{}' (ID: {}) has content: {}", 
+                                    note.getContentTitle(), note.getId(), note.getContentData());
+                        }
+                        
                         List<UnifiedContentDTO> noteUnified = notes.stream()
                             .map(this::transformManualContentToUnified)
                             .collect(Collectors.toList());
                         allContent.addAll(noteUnified);
                         totalNotes += noteUnified.size();
                         totalManualContent += noteUnified.size();
+                        
+                        log.info("Successfully transformed {} notes to unified format", noteUnified.size());
                     }
                     
                 } catch (Exception e) {
@@ -189,6 +201,43 @@ public class UnifiedContentController {
                 .build();
                 
             return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+    
+    /**
+     * Debug endpoint to check manual note content
+     * GET /api/content/debug/notes
+     */
+    @GetMapping("/debug/notes")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Map<String, Object>> debugNoteContent(
+            @AuthenticationPrincipal User user
+    ) {
+        try {
+            log.info("Debug endpoint - Getting manual notes for user: {}", user.getUsername());
+            
+            List<ManualGeneratedContentDTO> notes = manualGeneratedContentService.getContentByTypeForUser(
+                user.getUsername(), se499.kayaanbackend.AI_Generate.entity.ContentType.NOTE);
+            
+            Map<String, Object> debugInfo = new HashMap<>();
+            debugInfo.put("username", user.getUsername());
+            debugInfo.put("totalNotes", notes.size());
+            debugInfo.put("notes", notes);
+            
+            // Log each note for debugging
+            notes.forEach(note -> {
+                log.info("Debug Note - ID: {}, Title: '{}', Content: {}", 
+                        note.getId(), note.getContentTitle(), note.getContentData());
+            });
+            
+            return ResponseEntity.ok(debugInfo);
+            
+        } catch (Exception e) {
+            log.error("Debug endpoint error for user: {}", user.getUsername(), e);
+            Map<String, Object> errorInfo = new HashMap<>();
+            errorInfo.put("error", e.getMessage());
+            errorInfo.put("username", user.getUsername());
+            return ResponseEntity.badRequest().body(errorInfo);
         }
     }
     
@@ -260,12 +309,22 @@ public class UnifiedContentController {
      * Transform Manual Generated Content to unified format
      */
     private UnifiedContentDTO transformManualContentToUnified(ManualGeneratedContentDTO manualContent) {
-        return UnifiedContentDTO.builder()
+        log.debug("Transforming manual content to unified format: {} (type: {}, content: {})", 
+                 manualContent.getContentTitle(), manualContent.getContentType(), manualContent.getContentData());
+        
+        // Ensure content data is properly formatted
+        String contentData = manualContent.getContentData();
+        if (contentData == null || contentData.trim().isEmpty()) {
+            log.warn("Manual content {} has empty or null content data", manualContent.getId());
+            contentData = "{}"; // Fallback to empty JSON
+        }
+        
+        UnifiedContentDTO result = UnifiedContentDTO.builder()
             .id("manual-" + manualContent.getContentType() + "-" + manualContent.getId())
             .title(manualContent.getContentTitle())
             .contentType(manualContent.getContentType())
             .source("manual")
-            .content(manualContent.getContentData())
+            .content(contentData)
             .createdAt(manualContent.getCreatedAt())
             .updatedAt(manualContent.getUpdatedAt())
             .difficulty(manualContent.getDifficulty())
@@ -273,6 +332,9 @@ public class UnifiedContentController {
             .tags(manualContent.getTags() != null ? manualContent.getTags() : List.of())
             .createdByUsername(manualContent.getUsername())
             .build();
+        
+        log.debug("Transformed unified content: {} with content: {}", result.getTitle(), result.getContent());
+        return result;
     }
     
     /**
