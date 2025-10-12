@@ -7,7 +7,9 @@ import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -195,6 +197,78 @@ public class ManualGeneratedContentController {
         } catch (Exception e) {
             log.error("Failed to get manual content for user: {}", user.getUsername(), e);
             return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * Delete manual content by ID
+     * DELETE /api/content/manual/{id}
+     */
+    @DeleteMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> deleteManualContent(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long id) {
+        try {
+            log.info("=== Deleting manual content ===");
+            log.info("User: {}, Username: {}", user.getId(), user.getUsername());
+            log.info("Content ID: {}", id);
+            
+            // Validate input
+            if (id == null || id <= 0) {
+                log.error("Invalid content ID: {} (type: {})", id, id != null ? id.getClass().getSimpleName() : "null");
+                
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("success", false);
+                errorResponse.put("error", "InvalidContentId");
+                errorResponse.put("message", "Content ID must be a positive number. Received: " + id);
+                errorResponse.put("contentId", id);
+                
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+            
+            // Call service to delete content
+            manualGeneratedContentService.deleteContent(id, user.getUsername());
+            
+            log.info("Successfully deleted manual content: {} for user: {}", id, user.getUsername());
+            
+            // Return success response
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Content deleted successfully");
+            response.put("contentId", id);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (ManualGenerationException e) {
+            log.error("Failed to delete manual content {} for user: {} - {}", 
+                    id, user.getUsername(), e.getMessage());
+            
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("error", "ContentDeletionFailed");
+            errorResponse.put("message", "Failed to delete content: " + e.getMessage());
+            errorResponse.put("contentId", id);
+            
+            if (e.getMessage().contains("not found") || e.getMessage().contains("access denied")) {
+                errorResponse.put("errorType", "NotFoundError");
+                return ResponseEntity.notFound().build();
+            } else {
+                errorResponse.put("errorType", "ManualGenerationError");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+            
+        } catch (Exception e) {
+            log.error("Unexpected error deleting manual content {} for user: {}", 
+                    id, user.getUsername(), e);
+            
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("error", "UnknownError");
+            errorResponse.put("message", "An unexpected error occurred: " + e.getMessage());
+            errorResponse.put("contentId", id);
+            
+            return ResponseEntity.internalServerError().body(errorResponse);
         }
     }
 }

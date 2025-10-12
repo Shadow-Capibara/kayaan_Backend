@@ -1,0 +1,326 @@
+package se499.kayaanbackend.security.user;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * Service for managing study streak functionality
+ * Implements flowchart logic with Freezing Count system
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class StudyStreakService {
+    
+    private final StudyStreakRepository studyStreakRepository;
+    
+    /**
+     * Get study streak for user
+     * @param userId User ID
+     * @return StudyStreak entity
+     */
+    @Transactional(readOnly = true)
+    public Optional<StudyStreak> getStreak(Long userId) {
+        return studyStreakRepository.findByUserId(userId);
+    }
+    
+    /**
+     * Get or create study streak for user
+     * @param userId User ID
+     * @return StudyStreak entity
+     */
+    public StudyStreak getOrCreateStreak(Long userId) {
+        return studyStreakRepository.findByUserId(userId)
+            .orElseGet(() -> {
+                User user = new User();
+                user.setId(userId.intValue());
+                return studyStreakRepository.save(StudyStreak.builder()
+                    .user(user)
+                    .streakCount(0)
+                    .freezingCount(0)
+                    .build());
+            });
+    }
+
+    /**
+     * Get study streak for user (read-only)
+     * @param userId User ID
+     * @return Optional StudyStreak
+     */
+    @Transactional(readOnly = true)
+    public Optional<StudyStreak> getStreakOnly(Long userId) {
+        return studyStreakRepository.findByUserId(userId);
+    }
+    
+    /**
+     * Complete daily task (Created Content or Interactive Mode)
+     * @param userId User ID
+     * @param taskType Task type (CREATED_CONTENT, INTERACTIVE_MODE)
+     * @param contentId Content ID
+     * @return Updated StudyStreak
+     */
+    public StudyStreak completeDailyTask(Long userId, String taskType, Long contentId) {
+        StudyStreak streak = getOrCreateStreak(userId);
+        
+        // Check if user already completed daily task today
+        if (streak.hasCompletedDailyTaskToday()) {
+            log.info("User {} already completed daily task today - Task: {}, Content: {}", 
+                userId, taskType, contentId);
+            return streak; // Return existing streak without incrementing
+        }
+        
+        // Increment streak and update last activity time
+        streak.incrementStreak();
+        
+        log.info("Daily task completed for user {} - Task: {}, Content: {}, Streak: {}", 
+            userId, taskType, contentId, streak.getStreakCount());
+        
+        return studyStreakRepository.save(streak);
+    }
+    
+    /**
+     * Process daily check for a user (Start of Day Check)
+     * @param userId User ID
+     * @return Updated StudyStreak
+     */
+    public StudyStreak processDailyCheck(Long userId) {
+        StudyStreak streak = getOrCreateStreak(userId);
+        
+        // Check if user completed daily task today
+        if (!streak.hasCompletedDailyTaskToday()) {
+            // User didn't complete daily task - increment freezing count
+            streak.incrementFreezingCount();
+            log.info("Daily task not completed for user {} - Freezing count: {}", 
+                userId, streak.getFreezingCount());
+            
+            // Check reset conditions
+            if (shouldResetStreak(streak)) {
+                String reason = getResetReason(streak);
+                streak.resetStreak();
+                streak.resetFreezingCount();
+                
+                log.info("Streak reset for user {} - Reason: {}", userId, reason);
+            }
+        }
+        
+        return studyStreakRepository.save(streak);
+    }
+    
+    /**
+     * Check if streak should be reset based on flowchart logic
+     * @param streak StudyStreak entity
+     * @return True if should reset
+     */
+    private boolean shouldResetStreak(StudyStreak streak) {
+        // Check if freezing count > 1 in past week
+        if (streak.hasMoreThanOneFreezeInPastWeek()) {
+            // Check if within 1 week of last freeze AND before new month
+            LocalDate lastFreeze = streak.getLastFreezeDate();
+            LocalDate weekAgo = LocalDate.now().minusDays(7);
+            LocalDate monthStart = LocalDate.now().withDayOfMonth(1);
+            
+            if (lastFreeze.isAfter(weekAgo) && lastFreeze.isBefore(monthStart)) {
+                // Check if freezing count = 2
+                if (streak.getFreezingCount() == 2) {
+                    return true; // 2 freezes in 1 week
+                }
+            }
+        }
+        
+        // Check if freezing count > 2 in current month
+        if (streak.hasMoreThanTwoFreezesInCurrentMonth()) {
+            // Check if freezing count = 3
+            if (streak.getFreezingCount() == 3) {
+                return true; // 3 freezes in same month
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Get reset reason for logging
+     * @param streak StudyStreak entity
+     * @return Reset reason string
+     */
+    private String getResetReason(StudyStreak streak) {
+        if (streak.getFreezingCount() == 2 && streak.hasMoreThanOneFreezeInPastWeek()) {
+            return "2 freezes in 1 week";
+        } else if (streak.getFreezingCount() == 3 && streak.hasMoreThanTwoFreezesInCurrentMonth()) {
+            return "3 freezes in same month";
+        }
+        return "Unknown reason";
+    }
+    
+    /**
+     * Process daily check for all users (Scheduled job)
+     * Runs at 00:01 every day
+     */
+    public void processDailyCheckForAllUsers() {
+        log.info("Starting daily streak check for all users");
+        
+        // Get all streaks that need checking
+        List<StudyStreak> streaks = studyStreakRepository.findStreaksNeedingDailyCheck(
+            LocalDateTime.now().withHour(0).withMinute(0).withSecond(0));
+        
+        for (StudyStreak streak : streaks) {
+            try {
+                processDailyCheck(streak.getUser().getId().longValue());
+            } catch (Exception e) {
+                log.error("Error processing daily check for user {}: {}", 
+                    streak.getUser().getId(), e.getMessage());
+            }
+        }
+        
+        log.info("Daily streak check completed for {} users", streaks.size());
+    }
+    
+    /**
+     * Get streak status for dashboard display
+     * @param userId User ID
+     * @return StreakStatus DTO
+     */
+    @Transactional(readOnly = true)
+    public StreakStatus getStreakStatus(Long userId) {
+        try {
+            Optional<StudyStreak> streakOpt = getStreakOnly(userId);
+            
+            if (streakOpt.isPresent()) {
+                StudyStreak streak = streakOpt.get();
+                return StreakStatus.builder()
+                    .streakCount(streak.getStreakCount())
+                    .freezingCount(streak.getFreezingCount())
+                    .lastActivityTime(streak.getLastActivityTime())
+                    .lastFreezeDate(streak.getLastFreezeDate())
+                    .hasCompletedToday(streak.hasCompletedDailyTaskToday())
+                    .daysSinceLastActivity(streak.getDaysSinceLastActivity())
+                    .statusMessage(getStatusMessage(streak))
+                    .motivationalQuote(getMotivationalQuote(streak))
+                    .build();
+            } else {
+                // No streak exists yet - return default status
+                return StreakStatus.builder()
+                    .streakCount(0)
+                    .freezingCount(0)
+                    .hasCompletedToday(false)
+                    .daysSinceLastActivity(999L)
+                    .statusMessage("Start your learning journey today! Complete any content creation or interactive mode.")
+                    .motivationalQuote("Every expert was once a beginner. Start your learning journey today!")
+                    .build();
+            }
+        } catch (Exception e) {
+            log.error("Error getting streak status for user: {}", userId, e);
+            // Return default status on error
+            return StreakStatus.builder()
+                .streakCount(0)
+                .freezingCount(0)
+                .hasCompletedToday(false)
+                .daysSinceLastActivity(999L)
+                .statusMessage("Unable to load streak status")
+                .motivationalQuote("Don't give up! Try again later.")
+                .build();
+        }
+    }
+    
+    /**
+     * Get status message for a streak
+     */
+    private String getStatusMessage(StudyStreak streak) {
+        if (streak.hasCompletedDailyTaskToday()) {
+            return "Great job! You've completed your daily task today.";
+        } else if (streak.getStreakCount() == 0) {
+            return "Start your learning journey today! Complete any content creation or interactive mode.";
+        } else {
+            return String.format("You have a %d-day streak! Complete your daily task to maintain it.", streak.getStreakCount());
+        }
+    }
+    
+    /**
+     * Get motivational quote for a streak
+     */
+    private String getMotivationalQuote(StudyStreak streak) {
+        if (streak.getStreakCount() == 0) {
+            String[] quotes = {
+                "Every expert was once a beginner. Start your learning journey today!",
+                "The secret to getting ahead is getting started. Begin your streak now!",
+                "Success is the sum of small efforts repeated day in and day out.",
+                "Don't watch the clock; do what it does. Keep going and start your streak!",
+                "The future belongs to those who believe in the beauty of their dreams."
+            };
+            return quotes[streak.getStreakCount() % quotes.length];
+        }
+        return null;
+    }
+    
+    /**
+     * Reset streak manually (admin only)
+     * @param userId User ID
+     * @return Updated StudyStreak
+     */
+    public StudyStreak resetStreak(Long userId) {
+        StudyStreak streak = getOrCreateStreak(userId);
+        streak.resetStreak();
+        streak.resetFreezingCount();
+        
+        log.info("Streak manually reset for user {}", userId);
+        
+        return studyStreakRepository.save(streak);
+    }
+    
+    /**
+     * DTO for streak status information
+     */
+    @lombok.Data
+    @lombok.Builder
+    @lombok.NoArgsConstructor
+    @lombok.AllArgsConstructor
+    public static class StreakStatus {
+        private Integer streakCount;
+        private Integer freezingCount;
+        private LocalDateTime lastActivityTime;
+        private LocalDate lastFreezeDate;
+        private Boolean hasCompletedToday;
+        private Long daysSinceLastActivity;
+        private String statusMessage;
+        private String motivationalQuote;
+        
+        /**
+         * Get motivational quote for streak = 0
+         */
+        public String getMotivationalQuote() {
+            if (streakCount == 0) {
+                String[] quotes = {
+                    "Every expert was once a beginner. Start your learning journey today!",
+                    "The secret to getting ahead is getting started. Begin your streak now!",
+                    "Success is the sum of small efforts repeated day in and day out.",
+                    "Don't watch the clock; do what it does. Keep going and start your streak!",
+                    "The future belongs to those who believe in the beauty of their dreams."
+                };
+                return quotes[streakCount % quotes.length];
+            }
+            return null;
+        }
+        
+        /**
+         * Get status message
+         */
+        public String getStatusMessage() {
+            if (hasCompletedToday) {
+                return "Great job! You've completed your daily task today.";
+            } else if (streakCount == 0) {
+                return "Start your learning journey today! Complete any content creation or interactive mode.";
+            } else {
+                return String.format("You have a %d-day streak! Complete your daily task to maintain it.", streakCount);
+            }
+        }
+    }
+}

@@ -20,9 +20,11 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import se499.kayaanbackend.security.token.TokenRepository;
 import se499.kayaanbackend.security.user.UserDao;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -47,6 +49,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     final String userIdentifier;
     if (authHeader == null || !authHeader.startsWith("Bearer ")) {
       // If no valid auth header, let Spring Security handle it
+      log.debug("No valid Authorization header for {} {}", request.getMethod(), request.getServletPath());
       filterChain.doFilter(request, response);
       return;
     }
@@ -55,7 +58,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     if (userIdentifier != null && SecurityContextHolder.getContext().getAuthentication() == null) {
       UserDetails userDetails;
       if (userIdentifier.matches("\\d+")) {          // subject is numeric -> treat as id
-        Integer id = Integer.parseInt(userIdentifier);
+        int id = Integer.parseInt(userIdentifier);
         var userOpt = userDao.findById(id);
         if (userOpt.isEmpty()) {
           filterChain.doFilter(request, response);
@@ -70,6 +73,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
               .orElse(false);
       if (jwtService.isTokenValid(jwt, userDetails) && isTokenValid) {
         // ---- build authorities from JWT roles claim (if present) ----
+        @SuppressWarnings("unchecked")
         List<String> rolesFromToken = jwtService.extractClaim(jwt, c -> c.get("roles", List.class));
         Collection<? extends GrantedAuthority> authorities =
                 (rolesFromToken == null || rolesFromToken.isEmpty())
