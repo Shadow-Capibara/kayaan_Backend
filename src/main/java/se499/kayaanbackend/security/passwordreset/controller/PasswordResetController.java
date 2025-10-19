@@ -84,8 +84,10 @@ public class PasswordResetController {
             
         } catch (Exception e) {
             log.error("Error in forgot password process", e);
+            // ✅ ใช้ String concatenation โดยตรง (ไม่ใช้ String.format)
+            String errorMessage = "เกิดข้อผิดพลาด: " + (e.getMessage() != null ? e.getMessage() : "Unknown error");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(PasswordResetResponse.error("เกิดข้อผิดพลาด: " + e.getMessage()));
+                .body(PasswordResetResponse.error(errorMessage));
         }
     }
 
@@ -139,8 +141,10 @@ public class PasswordResetController {
             
         } catch (Exception e) {
             log.error("Error in reset password process", e);
+            // ✅ ป้องกันกรณี getMessage() เป็น null
+            String errorMessage = e.getMessage() != null ? e.getMessage() : "เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน";
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(PasswordResetResponse.error(e.getMessage()));
+                .body(PasswordResetResponse.error(errorMessage));
         }
     }
 

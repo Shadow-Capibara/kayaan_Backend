@@ -18,8 +18,11 @@ public class KayaanBackendApplication{
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**") // ใช้กับทุก endpoint
-                        .allowedOrigins("http://localhost:5173") // Origin ของ frontend (เช่น Vite dev server)
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                        .allowedOrigins(
+                            "http://localhost:5173",  // Vite dev server
+                            "http://localhost:5174"   // Vite dev server (alternative port)
+                        )
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);
             }

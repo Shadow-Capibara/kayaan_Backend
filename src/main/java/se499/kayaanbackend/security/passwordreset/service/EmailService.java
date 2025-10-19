@@ -49,118 +49,56 @@ public class EmailService {
 
     /**
      * สร้าง HTML content สำหรับอีเมล reset password
+     * ใช้ String.format() กับ %s (ปลอดภัย)
      */
     private String buildPasswordResetEmailContent(String resetCode) {
-        return """
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <style>
-                        body {
-                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                            background-color: #f4f4f4;
-                            margin: 0;
-                            padding: 0;
-                        }
-                        .container {
-                            max-width: 600px;
-                            margin: 40px auto;
-                            background-color: #ffffff;
-                            border-radius: 10px;
-                            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                            overflow: hidden;
-                        }
-                        .header {
-                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                            color: white;
-                            padding: 30px;
-                            text-align: center;
-                        }
-                        .header h1 {
-                            margin: 0;
-                            font-size: 28px;
-                        }
-                        .content {
-                            padding: 40px 30px;
-                        }
-                        .reset-code-box {
-                            background-color: #f8f9fa;
-                            border: 2px dashed #667eea;
-                            border-radius: 8px;
-                            padding: 25px;
-                            text-align: center;
-                            margin: 25px 0;
-                        }
-                        .reset-code {
-                            font-size: 36px;
-                            font-weight: bold;
-                            color: #667eea;
-                            letter-spacing: 8px;
-                            font-family: 'Courier New', monospace;
-                        }
-                        .info-text {
-                            color: #555;
-                            line-height: 1.6;
-                            margin: 15px 0;
-                        }
-                        .warning {
-                            background-color: #fff3cd;
-                            border-left: 4px solid #ffc107;
-                            padding: 15px;
-                            margin: 20px 0;
-                            border-radius: 4px;
-                        }
-                        .footer {
-                            background-color: #f8f9fa;
-                            padding: 20px;
-                            text-align: center;
-                            color: #6c757d;
-                            font-size: 14px;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <div class="header">
-                            <h1>🔐 รีเซ็ตรหัสผ่าน Kayaan</h1>
-                        </div>
-                        <div class="content">
-                            <p class="info-text">สวัสดีครับ,</p>
-                            <p class="info-text">
-                                คุณได้ทำการร้องขอรีเซ็ตรหัสผ่านสำหรับบัญชี Kayaan ของคุณ 
-                                กรุณาใช้รหัสด้านล่างนี้เพื่อดำเนินการต่อ:
-                            </p>
-                            
-                            <div class="reset-code-box">
-                                <div style="color: #6c757d; font-size: 14px; margin-bottom: 10px;">
-                                    รหัสรีเซ็ตรหัสผ่านของคุณคือ
-                                </div>
-                                <div class="reset-code">%s</div>
-                            </div>
-                            
-                            <div class="warning">
-                                <strong>⏰ สำคัญ:</strong> รหัสนี้จะหมดอายุภายใน <strong>15 นาที</strong>
-                            </div>
-                            
-                            <p class="info-text">
-                                หากคุณไม่ได้ทำการร้องขอรีเซ็ตรหัสผ่าน กรุณาเพิกเฉยต่ออีเมลนี้ 
-                                บัญชีของคุณยังคงปลอดภัยอยู่
-                            </p>
-                            
-                            <p class="info-text" style="margin-top: 30px;">
-                                ขอบคุณที่ใช้บริการ Kayaan<br>
-                                ทีมงาน Kayaan
-                            </p>
-                        </div>
-                        <div class="footer">
-                            © 2025 Kayaan. All rights reserved.<br>
-                            อีเมลนี้ถูกส่งโดยอัตโนมัติ กรุณาอย่าตอบกลับ
-                        </div>
+        // ✅ ใช้ String.format() กับ %s เท่านั้น (ปลอดภัย)
+        return String.format(
+            """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+            </head>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #4F46E5; margin-bottom: 20px;">🔐 รีเซ็ตรหัสผ่าน Kayaan</h2>
+                    
+                    <p style="margin-bottom: 15px;">สวัสดีครับ,</p>
+                    
+                    <p style="margin-bottom: 20px;">คุณได้ทำการร้องขอรีเซ็ตรหัสผ่านสำหรับบัญชี Kayaan ของคุณ กรุณาใช้รหัสด้านล่างนี้เพื่อดำเนินการต่อ:</p>
+                    
+                    <div style="background-color: #F3F4F6; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0; border: 2px solid #4F46E5;">
+                        <h1 style="font-family: 'Courier New', monospace; letter-spacing: 8px; color: #4F46E5; font-size: 32px; margin: 0;">%s</h1>
                     </div>
-                </body>
-                </html>
-                """.formatted(resetCode);
+                    
+                    <div style="background-color: #FEF3C7; border-left: 4px solid #F59E0B; padding: 12px; margin: 20px 0; border-radius: 4px;">
+                        <p style="margin: 0;"><strong>⏰ สำคัญ:</strong> รหัสนี้จะหมดอายุภายใน <strong>15 นาที</strong></p>
+                    </div>
+                    
+                    <p style="margin-bottom: 20px;">กรุณานำรหัสนี้ไปกรอกในหน้า Reset Password พร้อมกับรหัสผ่านใหม่ที่คุณต้องการ</p>
+                    
+                    <div style="background-color: #FEE2E2; border-left: 4px solid #EF4444; padding: 12px; margin: 20px 0; border-radius: 4px;">
+                        <p style="margin: 0;"><strong>🔒 หมายเหตุ:</strong> หากคุณไม่ได้ทำการร้องขอรีเซ็ตรหัสผ่าน กรุณาเพิกเฉยต่ออีเมลนี้</p>
+                    </div>
+                    
+                    <hr style="border: none; border-top: 1px solid #E5E7EB; margin: 30px 0;">
+                    
+                    <p style="color: #6B7280; font-size: 14px; margin-bottom: 5px;">
+                        ขอบคุณครับ,<br>
+                        <strong>Kayaan Team</strong>
+                    </p>
+                    
+                    <p style="color: #9CA3AF; font-size: 12px; margin-top: 20px;">
+                        © 2025 Kayaan. All rights reserved.<br>
+                        อีเมลนี้ถูกส่งโดยอัตโนมัติ กรุณาอย่าตอบกลับ
+                    </p>
+                </div>
+            </body>
+            </html>
+            """,
+            resetCode  // ใช้ %s เท่านั้น - ปลอดภัย
+        );
     }
 }
 

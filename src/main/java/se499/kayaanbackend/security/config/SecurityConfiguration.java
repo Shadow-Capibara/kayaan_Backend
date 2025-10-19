@@ -109,6 +109,7 @@ public class SecurityConfiguration {
             "http://localhost:3000",      // React dev server
             "http://localhost:3001",      // Alternative port
             "http://localhost:5173",      // Vite dev server
+            "http://localhost:5174",      // Vite dev server (alternative port)
             "https://kayaan-frontend.vercel.app", // Production frontend
             "https://*.vercel.app"       // Vercel deployments
         ));
