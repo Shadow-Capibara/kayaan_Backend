@@ -118,20 +118,17 @@ public class StudyStreak {
     }
     
     /**
-     * Check if freezing count > 1 in past week
+     * Check if freezing count equals 2 (new logic for reset condition)
      */
-    public boolean hasMoreThanOneFreezeInPastWeek() {
-        if (lastFreezeDate == null) return false;
-        return freezingCount > 1 && lastFreezeDate.isAfter(LocalDate.now().minusDays(7));
+    public boolean isFreezingCountAtReset() {
+        return freezingCount == 2;
     }
     
     /**
-     * Check if freezing count > 2 in current month
+     * Check if freezing count is at warning level (1)
      */
-    public boolean hasMoreThanTwoFreezesInCurrentMonth() {
-        if (lastFreezeDate == null) return false;
-        LocalDate currentMonth = LocalDate.now().withDayOfMonth(1);
-        return freezingCount > 2 && lastFreezeDate.isAfter(currentMonth);
+    public boolean isFreezingCountAtWarning() {
+        return freezingCount == 1;
     }
     
     /**

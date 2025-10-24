@@ -63,6 +63,7 @@ public class StudyStreakService {
     
     /**
      * Complete daily task (Created Content or Interactive Mode)
+     * New logic: Always increment streak when user completes task, reset freezing count to 0
      * @param userId User ID
      * @param taskType Task type (CREATED_CONTENT, INTERACTIVE_MODE)
      * @param contentId Content ID
@@ -78,17 +79,20 @@ public class StudyStreakService {
             return streak; // Return existing streak without incrementing
         }
         
-        // Increment streak and update last activity time
+        // New logic: Always increment streak and reset freezing count to 0
         streak.incrementStreak();
+        streak.resetFreezingCount(); // Reset freezing count when user completes task
         
-        log.info("Daily task completed for user {} - Task: {}, Content: {}, Streak: {}", 
-            userId, taskType, contentId, streak.getStreakCount());
+        log.info("Daily task completed for user {} - Task: {}, Content: {}, Streak: {}, Freezing: {}", 
+            userId, taskType, contentId, streak.getStreakCount(), streak.getFreezingCount());
         
         return studyStreakRepository.save(streak);
     }
     
     /**
      * Process daily check for a user (Start of Day Check)
+     * New logic: If user didn't complete task, increment freezing count
+     * If freezing_count == 2, reset streak to 0
      * @param userId User ID
      * @return Updated StudyStreak
      */
@@ -102,7 +106,7 @@ public class StudyStreakService {
             log.info("Daily task not completed for user {} - Freezing count: {}", 
                 userId, streak.getFreezingCount());
             
-            // Check reset conditions
+            // New logic: Check if freezing_count == 2, then reset streak
             if (shouldResetStreak(streak)) {
                 String reason = getResetReason(streak);
                 streak.resetStreak();
@@ -116,35 +120,14 @@ public class StudyStreakService {
     }
     
     /**
-     * Check if streak should be reset based on flowchart logic
+     * Check if streak should be reset based on new flowchart logic
+     * Reset when freezing_count == 2 (simple logic)
      * @param streak StudyStreak entity
      * @return True if should reset
      */
     private boolean shouldResetStreak(StudyStreak streak) {
-        // Check if freezing count > 1 in past week
-        if (streak.hasMoreThanOneFreezeInPastWeek()) {
-            // Check if within 1 week of last freeze AND before new month
-            LocalDate lastFreeze = streak.getLastFreezeDate();
-            LocalDate weekAgo = LocalDate.now().minusDays(7);
-            LocalDate monthStart = LocalDate.now().withDayOfMonth(1);
-            
-            if (lastFreeze.isAfter(weekAgo) && lastFreeze.isBefore(monthStart)) {
-                // Check if freezing count = 2
-                if (streak.getFreezingCount() == 2) {
-                    return true; // 2 freezes in 1 week
-                }
-            }
-        }
-        
-        // Check if freezing count > 2 in current month
-        if (streak.hasMoreThanTwoFreezesInCurrentMonth()) {
-            // Check if freezing count = 3
-            if (streak.getFreezingCount() == 3) {
-                return true; // 3 freezes in same month
-            }
-        }
-        
-        return false;
+        // New logic: Reset streak when freezing_count == 2
+        return streak.getFreezingCount() == 2;
     }
     
     /**
@@ -153,10 +136,8 @@ public class StudyStreakService {
      * @return Reset reason string
      */
     private String getResetReason(StudyStreak streak) {
-        if (streak.getFreezingCount() == 2 && streak.hasMoreThanOneFreezeInPastWeek()) {
-            return "2 freezes in 1 week";
-        } else if (streak.getFreezingCount() == 3 && streak.hasMoreThanTwoFreezesInCurrentMonth()) {
-            return "3 freezes in same month";
+        if (streak.getFreezingCount() == 2) {
+            return "2 consecutive missed days";
         }
         return "Unknown reason";
     }
@@ -232,13 +213,15 @@ public class StudyStreakService {
     }
     
     /**
-     * Get status message for a streak
+     * Get status message for a streak (updated for new logic)
      */
     private String getStatusMessage(StudyStreak streak) {
         if (streak.hasCompletedDailyTaskToday()) {
             return "Great job! You've completed your daily task today.";
         } else if (streak.getStreakCount() == 0) {
             return "Start your learning journey today! Complete any content creation or interactive mode.";
+        } else if (streak.isFreezingCountAtWarning()) {
+            return String.format("You have a %d-day streak! Complete your daily task today to maintain it. (1 missed day)", streak.getStreakCount());
         } else {
             return String.format("You have a %d-day streak! Complete your daily task to maintain it.", streak.getStreakCount());
         }
@@ -311,13 +294,15 @@ public class StudyStreakService {
         }
         
         /**
-         * Get status message
+         * Get status message (updated for new logic)
          */
         public String getStatusMessage() {
             if (hasCompletedToday) {
                 return "Great job! You've completed your daily task today.";
             } else if (streakCount == 0) {
                 return "Start your learning journey today! Complete any content creation or interactive mode.";
+            } else if (freezingCount == 1) {
+                return String.format("You have a %d-day streak! Complete your daily task today to maintain it. (1 missed day)", streakCount);
             } else {
                 return String.format("You have a %d-day streak! Complete your daily task to maintain it.", streakCount);
             }
