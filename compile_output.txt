@@ -1,2 +1,0 @@
-Error occurred during initialization of VM
-Failed setting boot class path.
