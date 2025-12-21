@@ -20,7 +20,7 @@ public class KayaanBackendApplication{
                 registry.addMapping("/**") // ใช้กับทุก endpoint
                         .allowedOrigins(
                             "http://localhost:5173",  // Vite dev server
-                            "http://localhost:5174"   // Vite dev server (alternative port)
+                            "https://kayaan-project-4jbs.vercel.app/"   // Vite dev server (alternative port)
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                         .allowedHeaders("*")
